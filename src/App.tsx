@@ -8,6 +8,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Logo } from './components/Logo';
 import React, { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
@@ -201,12 +202,7 @@ export default function App() {
 
       <footer className="py-20 border-t border-slate-800 mt-20">
         <div className="mx-auto max-w-7xl px-8 flex flex-col md:flex-row justify-between items-center gap-12">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <span className="text-xs font-bold text-white uppercase">V</span>
-            </div>
-            <span className="text-sm font-bold text-white tracking-[0.2em] uppercase">Vantage <span className="text-indigo-400">Professional</span></span>
-          </div>
+          <Logo size="sm" />
           <div className="text-[10px] text-slate-600 font-bold uppercase tracking-[0.3em]">
             © 2026 Vantage. Neural Assessment Framework.
           </div>

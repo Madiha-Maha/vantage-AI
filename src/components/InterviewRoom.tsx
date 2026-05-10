@@ -61,9 +61,9 @@ const Chronometer = ({ isRecording, onWarning }: { isRecording: boolean; onWarni
       </span>
       {time > 120 && (
         <motion.span 
-          animate={{ opacity: [1, 0.4, 1] }}
-          transition={{ repeat: Infinity, duration: 1.5 }}
-          className="text-[10px] font-bold uppercase tracking-widest"
+          animate={{ opacity: [1, 0.2, 1], scale: [1, 1.1, 1] }}
+          transition={{ repeat: Infinity, duration: 0.8, ease: "easeInOut" }}
+          className="text-xs font-black uppercase tracking-widest text-rose-300"
         >
           Conciseness Warning
         </motion.span>
@@ -132,6 +132,7 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
   const [timerWarning, setTimerWarning] = useState(false);
   const [eyeStats, setEyeStats] = useState({ direction: "Center", duration: 0, isMaintaining: true });
   const [speechSupported, setSpeechSupported] = useState(true);
+  const [mediaError, setMediaError] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -174,12 +175,14 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
       });
       streamRef.current = stream;
       setPeripheralsStatus({ video: true, audio: true });
+      setMediaError(null);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
     } catch (err) {
       console.error("Failed to get media", err);
       setPeripheralsStatus({ video: false, audio: false });
+      setMediaError("Permission Denied: Ensure camera and microphone access is enabled in your browser settings to proceed with the assessment.");
     }
   };
 
@@ -385,6 +388,23 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
           </AnimatePresence>
         </div>
         
+        {mediaError && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-6 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center gap-3 text-rose-400 text-xs font-medium max-w-sm"
+          >
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{mediaError}</span>
+            <button 
+              onClick={() => { setMediaError(null); initMedia(); }}
+              className="ml-auto underline font-bold"
+            >
+              Retry
+            </button>
+          </motion.div>
+        )}
+
         <div className="mt-12 w-full flex items-center justify-between border-t border-slate-800/50 pt-8">
            <div className="flex gap-12">
               <div className="space-y-1">

@@ -1,5 +1,6 @@
 import { motion } from "motion/react";
 import { Rocket, Sparkles, Target, Zap } from "lucide-react";
+import { Logo } from "./Logo";
 
 export function Hero({ onStart }: { onStart: () => void }) {
   return (
@@ -11,7 +12,8 @@ export function Hero({ onStart }: { onStart: () => void }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="mt-24 sm:mt-32 lg:mt-16">
+            <Logo size="lg" className="mb-10" />
+            <div className="mt-8">
               <span className="rounded-full bg-indigo-500/10 px-3 py-1 text-sm font-semibold leading-6 text-indigo-400 ring-1 ring-inset ring-indigo-500/20">
                 Revolutionizing Interview Prep
               </span>

@@ -154,8 +154,8 @@ export class GeminiService {
         contents: prompt,
       });
 
-      for await (const chunk of result.stream) {
-        const text = chunk.text();
+      for await (const chunk of result) {
+        const text = chunk.text;
         if (text) onChunk(text);
       }
     } catch (error) {

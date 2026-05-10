@@ -1,5 +1,6 @@
+import { Logo } from "./Logo";
 import { motion } from "motion/react";
-import { User, ClipboardList, Settings, LayoutDashboard, Rocket } from "lucide-react";
+import { User, Settings, LayoutDashboard, Rocket } from "lucide-react";
 import { cn } from "../lib/utils";
 import { UserProfile } from "../types";
 
@@ -21,12 +22,7 @@ export function Navbar({ className, activeTab, onTabChange, profile, onOpenProfi
   return (
     <nav className={cn("sticky top-0 z-50 w-full border-b border-slate-800 bg-slate-950/80 backdrop-blur-md", className)}>
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <span className="font-bold text-white uppercase text-sm">V</span>
-          </div>
-          <span className="text-xl font-bold tracking-tight text-white">Vantage</span>
-        </div>
+        <Logo size="sm" onClick={() => onTabChange('landing')} className="cursor-pointer" />
 
         <div className="hidden md:flex items-center gap-1">
           {tabs.map((tab) => (
