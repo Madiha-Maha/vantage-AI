@@ -1,36 +1,49 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { InterviewConfig, InterviewQuestion, QuestionAnalysis } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiInstance: any = null;
+
+function getAI() {
+  if (!aiInstance) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY is not set. Please provide it in the settings.");
+    }
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+}
+
+const MODEL_NAME = "gemini-3-flash-preview";
 
 export class GeminiService {
   static async generateQuestions(config: InterviewConfig, count: number = 5): Promise<InterviewQuestion[]> {
     const prompt = `Generate ${count} interview questions for a ${config.role} position in the ${config.industry} industry at ${config.difficulty} difficulty level. 
     Return the result as a JSON array of objects with an 'id' and 'text' field.`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              id: { type: Type.STRING },
-              text: { type: Type.STRING },
+    try {
+      const response = await getAI().models.generateContent({
+        model: MODEL_NAME,
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                id: { type: Type.STRING },
+                text: { type: Type.STRING },
+              },
+              required: ["id", "text"],
             },
-            required: ["id", "text"],
           },
         },
-      },
-    });
+      });
 
-    try {
       return JSON.parse(response.text);
     } catch (e) {
-      console.error("Failed to parse questions", e);
+      console.error("Failed to generate questions", e);
       return [];
     }
   }
@@ -59,33 +72,33 @@ export class GeminiService {
     Format carefully as JSON. No prose.
     CRITICAL: ACT AS A SENIOR HUMAN ASSESSOR. NEVER MENTION AI.`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            score: { type: Type.NUMBER },
-            confidence: { type: Type.NUMBER },
-            speakingSpeed: { type: Type.NUMBER },
-            keywordsFound: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING },
-            },
-            tips: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING },
-            },
-            eyeContactScore: { type: Type.NUMBER },
-          },
-          required: ["score", "confidence", "speakingSpeed", "keywordsFound", "tips", "eyeContactScore"],
-        },
-      },
-    });
-
     try {
+      const response = await getAI().models.generateContent({
+        model: MODEL_NAME,
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              score: { type: Type.NUMBER },
+              confidence: { type: Type.NUMBER },
+              speakingSpeed: { type: Type.NUMBER },
+              keywordsFound: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+              },
+              tips: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+              },
+              eyeContactScore: { type: Type.NUMBER },
+            },
+            required: ["score", "confidence", "speakingSpeed", "keywordsFound", "tips", "eyeContactScore"],
+          },
+        },
+      });
+
       const analysis = JSON.parse(response.text);
       // Ensure speaking speed is what we calculated or what the engine adjusted
       return { ...analysis, speakingSpeed };
@@ -117,8 +130,8 @@ export class GeminiService {
     `;
 
     try {
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+      const response = await getAI().models.generateContent({
+        model: MODEL_NAME,
         contents: prompt,
       });
 
@@ -149,12 +162,12 @@ export class GeminiService {
     `;
 
     try {
-      const result = await ai.models.generateContentStream({
-        model: "gemini-3-flash-preview",
+      const response = await getAI().models.generateContentStream({
+        model: MODEL_NAME,
         contents: prompt,
       });
 
-      for await (const chunk of result) {
+      for await (const chunk of response) {
         const text = chunk.text;
         if (text) onChunk(text);
       }
