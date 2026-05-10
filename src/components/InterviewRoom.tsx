@@ -10,6 +10,109 @@ interface InterviewRoomProps {
   onComplete: (results: InterviewQuestion[]) => void;
 }
 
+const Chronometer = ({ isRecording, onWarning }: { isRecording: boolean; onWarning: (warn: boolean) => void }) => {
+  const [time, setTime] = useState(0);
+  
+  useEffect(() => {
+    let interval: any;
+    if (isRecording) {
+      interval = setInterval(() => {
+        setTime(prev => {
+          const next = prev + 1;
+          if (next > 120) onWarning(true);
+          return next;
+        });
+      }, 1000);
+    } else {
+      setTime(0);
+      onWarning(false);
+    }
+    return () => clearInterval(interval);
+  }, [isRecording, onWarning]);
+
+  if (!isRecording) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      className={cn(
+        "flex items-center gap-3 px-4 py-2 rounded-2xl backdrop-blur-xl border transition-colors",
+        time > 120 ? "bg-rose-500/20 border-rose-500/30 text-rose-400" : "bg-slate-950/60 border-white/10 text-white"
+      )}
+    >
+      <div className="relative h-4 w-4">
+        <svg className="h-full w-full transform -rotate-90">
+          <circle
+            cx="8"
+            cy="8"
+            r="7"
+            stroke="currentColor"
+            strokeWidth="2"
+            fill="transparent"
+            strokeDasharray={44}
+            strokeDashoffset={44 - (Math.min(time, 180) / 180) * 44}
+            className="opacity-40"
+          />
+        </svg>
+      </div>
+      <span className="text-xs font-bold font-mono tracking-tighter">
+        {Math.floor(time / 60)}:{String(time % 60).padStart(2, '0')}
+      </span>
+      {time > 120 && (
+        <motion.span 
+          animate={{ opacity: [1, 0.4, 1] }}
+          transition={{ repeat: Infinity, duration: 1.5 }}
+          className="text-[10px] font-bold uppercase tracking-widest"
+        >
+          Conciseness Warning
+        </motion.span>
+      )}
+    </motion.div>
+  );
+};
+
+const GazeTracker = ({ isRecording, onUpdate }: { isRecording: boolean; onUpdate: (stats: any) => void }) => {
+  const [stats, setStats] = useState({
+    direction: "Center",
+    duration: 0,
+    isMaintaining: true,
+  });
+
+  useEffect(() => {
+    let interval: any;
+    if (isRecording) {
+      interval = setInterval(() => {
+        const directions = ["Center", "Left", "Right", "Up", "Down"];
+        const willMaintain = Math.random() > 0.15;
+        const newDirection = willMaintain ? "Center" : directions[Math.floor(Math.random() * directions.length)];
+        
+        setStats(prev => {
+          const next = {
+            direction: newDirection,
+            duration: newDirection === "Center" ? prev.duration + 1 : prev.duration,
+            isMaintaining: newDirection === "Center",
+          };
+          onUpdate(next);
+          return next;
+        });
+      }, 1000);
+    } else {
+      const reset = { direction: "Center", duration: 0, isMaintaining: true };
+      setStats(reset);
+      onUpdate(reset);
+    }
+    return () => clearInterval(interval);
+  }, [isRecording, onUpdate]);
+
+  return (
+    <div className="flex items-center gap-1.5 mr-3 border-r border-white/10 pr-3">
+       <div className={cn("h-2 w-2 rounded-full", isRecording ? "bg-emerald-500 animate-pulse" : "bg-slate-500")} />
+       <span className="text-[10px] font-bold text-white uppercase tracking-widest">{stats.direction}</span>
+    </div>
+  );
+};
+
 export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
   const [questions, setQuestions] = useState<InterviewQuestion[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -26,72 +129,30 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
   const [initPhase, setInitPhase] = useState<"peripherals" | "logic" | "ready">("peripherals");
   const [peripheralsStatus, setPeripheralsStatus] = useState({ video: false, audio: false });
 
-  // Segment Timer - Neural Chronometer
-  const [segmentTime, setSegmentTime] = useState(0);
   const [timerWarning, setTimerWarning] = useState(false);
-
-  // Eye Contact Stats - Neural Vision Core Feature
-  const [eyeContactStats, setEyeContactStats] = useState({
-    direction: "Center",
-    duration: 0,
-    isMaintaining: true,
-    history: [] as string[]
-  });
+  const [eyeStats, setEyeStats] = useState({ direction: "Center", duration: 0, isMaintaining: true });
+  const [speechSupported, setSpeechSupported] = useState(true);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Neural Chronometer Loop
-  useEffect(() => {
-    let interval: any;
-    if (isRecording) {
-      interval = setInterval(() => {
-        setSegmentTime(prev => {
-          const next = prev + 1;
-          if (next > 120) setTimerWarning(true); // Warning at 2 minutes
-          return next;
-        });
-      }, 1000);
-    } else {
-      setSegmentTime(0);
-      setTimerWarning(false);
-    }
-    return () => clearInterval(interval);
-  }, [isRecording]);
-
-  // Simulated Eye Contact Tracking Loop
-  useEffect(() => {
-    let interval: any;
-    if (isRecording) {
-      interval = setInterval(() => {
-        const directions = ["Center", "Left", "Right", "Up", "Down"];
-        // 85% chance of staying centered if already centered
-        const willMaintain = Math.random() > 0.15;
-        const newDirection = willMaintain ? "Center" : directions[Math.floor(Math.random() * directions.length)];
-        
-        setEyeContactStats(prev => ({
-          direction: newDirection,
-          duration: newDirection === "Center" ? prev.duration + 1 : prev.duration,
-          isMaintaining: newDirection === "Center",
-          history: [...prev.history.slice(-9), newDirection]
-        }));
-      }, 1000);
-    } else {
-      setEyeContactStats({ direction: "Center", duration: 0, isMaintaining: true, history: [] });
-    }
-    return () => clearInterval(interval);
-  }, [isRecording]);
+  // Removed main thread interval loops to sub-components for performance
   const recognitionRef = useRef<any>(null);
   const startTimeRef = useRef<number>(0);
 
   useEffect(() => {
     const runSetup = async () => {
-      await initMedia();
+      // Start both processes in parallel for maximum speed
+      const mediaPromise = initMedia();
+      const interviewPromise = initInterview();
+      
+      await mediaPromise;
       setInitPhase("logic");
-      await initInterview();
+      await interviewPromise;
       setInitPhase("ready");
-      // Short delay for the "Wow" effect
-      setTimeout(() => setIsInitializing(false), 800);
+      
+      // Minimal delay to ensure transistions are smooth but fast
+      setTimeout(() => setIsInitializing(false), 400);
     };
     runSetup();
     return () => {
@@ -136,6 +197,7 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
     // Init Web Speech API
     const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
     if (SpeechRecognition) {
+      setSpeechSupported(true);
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
@@ -155,6 +217,8 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
       recognition.onerror = (e: any) => console.error("Speech Recognition Error", e);
       recognition.start();
       recognitionRef.current = recognition;
+    } else {
+      setSpeechSupported(false);
     }
   };
 
@@ -206,14 +270,23 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
   const askMentor = async () => {
     if (!mentorQuery.trim()) return;
     setIsMentorLoading(true);
-    setMentorResponse(null);
+    setMentorResponse("");
     try {
-      const resp = await GeminiService.askMentor(currentQuestion.text, mentorQuery, config.role, config.industry);
-      setMentorResponse(resp);
+      // Use streaming for a much faster "Wow" response feel
+      await GeminiService.askMentorStream(
+        currentQuestion.text, 
+        mentorQuery, 
+        config.role, 
+        config.industry,
+        (chunk) => {
+          setMentorResponse(prev => (prev || "") + chunk);
+          setIsMentorLoading(false); // Stop loading as soon as first chunk arrives
+        }
+      );
     } catch (e) {
       setMentorResponse("I'm having trouble analyzing your request. Try focusing on the STAR method.");
+      setIsMentorLoading(false);
     }
-    setIsMentorLoading(false);
   };
 
   if (isInitializing) {
@@ -374,55 +447,11 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
               )}
             </div>
 
-            {/* Neural Chronometer UI */}
-            <AnimatePresence>
-              {isRecording && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-2 rounded-2xl backdrop-blur-xl border transition-colors",
-                    timerWarning ? "bg-rose-500/20 border-rose-500/30 text-rose-400" : "bg-slate-950/60 border-white/10 text-white"
-                  )}
-                >
-                  <div className="relative h-4 w-4">
-                    <svg className="h-full w-full transform -rotate-90">
-                      <circle
-                        cx="8"
-                        cy="8"
-                        r="7"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        fill="transparent"
-                        strokeDasharray={44}
-                        strokeDashoffset={44 - (Math.min(segmentTime, 180) / 180) * 44}
-                        className="opacity-40"
-                      />
-                    </svg>
-                  </div>
-                  <span className="text-xs font-bold font-mono tracking-tighter">
-                    {Math.floor(segmentTime / 60)}:{String(segmentTime % 60).padStart(2, '0')}
-                  </span>
-                  {timerWarning && (
-                    <motion.span 
-                      animate={{ opacity: [1, 0.4, 1] }}
-                      transition={{ repeat: Infinity, duration: 1.5 }}
-                      className="text-[10px] font-bold uppercase tracking-widest"
-                    >
-                      Conciseness Warning
-                    </motion.span>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <Chronometer isRecording={isRecording} onWarning={setTimerWarning} />
           </div>
 
-          {/* Neural Heartbeat / Waveform */}
           <div className="absolute top-6 right-6 flex items-center gap-1.5 backdrop-blur-md bg-slate-950/40 p-3 rounded-2xl border border-white/10">
-            <div className="flex items-center gap-1.5 mr-3 border-r border-white/10 pr-3">
-               <div className={cn("h-2 w-2 rounded-full", isRecording ? "bg-emerald-500 animate-pulse" : "bg-slate-500")} />
-               <span className="text-[10px] font-bold text-white uppercase tracking-widest">{eyeContactStats.direction}</span>
-            </div>
+            <GazeTracker isRecording={isRecording} onUpdate={setEyeStats} />
             {[1, 2, 3, 4, 5].map((i) => (
               <motion.div
                 key={i}
@@ -443,7 +472,7 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
 
           {/* Neural Vision Gaze Markers */}
           <AnimatePresence>
-            {isRecording && eyeContactStats.direction === "Center" && (
+            {isRecording && eyeStats.direction === "Center" && (
               <motion.div 
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -506,12 +535,14 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
               </div>
               <div className="flex-1">
                 <p className="text-sm font-medium text-slate-300 leading-relaxed italic">
-                  {transcript || "Waiting for audio signal..."}
-                  <motion.span 
-                    animate={{ opacity: [1, 0] }}
-                    transition={{ repeat: Infinity, duration: 0.8 }}
-                    className="inline-block w-1 h-4 bg-indigo-500 ml-1 translate-y-0.5"
-                  />
+                  {speechSupported ? (transcript || "Waiting for audio signal...") : "Speech recognition is not supported in this browser. Please use Chrome or Edge for the full experience."}
+                  {speechSupported && (
+                    <motion.span 
+                      animate={{ opacity: [1, 0] }}
+                      transition={{ repeat: Infinity, duration: 0.8 }}
+                      className="inline-block w-1 h-4 bg-indigo-500 ml-1 translate-y-0.5"
+                    />
+                  )}
                 </p>
               </div>
             </motion.div>
@@ -571,14 +602,14 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
             <div>
               <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase mb-3 tracking-widest">
                  <span>Gaze Centrality</span>
-                 <span className={cn(eyeContactStats.isMaintaining ? "text-emerald-400" : "text-amber-400")}>
-                    {isRecording ? Math.round((eyeContactStats.duration / (Math.max(1, (Date.now() - startTimeRef.current) / 1000))) * 100) : (currentQuestion.analysis?.eyeContactScore || 0)}%
+                 <span className={cn(eyeStats.isMaintaining ? "text-emerald-400" : "text-amber-400")}>
+                    {isRecording ? Math.round((eyeStats.duration / (Math.max(1, (Date.now() - startTimeRef.current) / 1000))) * 100) : (currentQuestion.analysis?.eyeContactScore || 0)}%
                  </span>
               </div>
               <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
                 <motion.div 
                   className="h-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]"
-                  animate={{ width: `${isRecording ? Math.round((eyeContactStats.duration / (Math.max(1, (Date.now() - startTimeRef.current) / 1000))) * 100) : (currentQuestion.analysis?.eyeContactScore || 0)}%` }}
+                  animate={{ width: `${isRecording ? Math.round((eyeStats.duration / (Math.max(1, (Date.now() - startTimeRef.current) / 1000))) * 100) : (currentQuestion.analysis?.eyeContactScore || 0)}%` }}
                 />
               </div>
             </div>
@@ -586,11 +617,11 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 shadow-inner">
                 <div className="text-[10px] font-bold text-slate-600 uppercase mb-1">Focal Node</div>
-                <div className="text-sm font-bold text-white uppercase tracking-widest">{isRecording ? eyeContactStats.direction : "Resting"}</div>
+                <div className="text-sm font-bold text-white uppercase tracking-widest">{isRecording ? eyeStats.direction : "Resting"}</div>
               </div>
               <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 shadow-inner">
                 <div className="text-[10px] font-bold text-slate-600 uppercase mb-1">Lock Duration</div>
-                <div className="text-sm font-bold text-white tabular-nums tracking-tighter">{eyeContactStats.duration}s</div>
+                <div className="text-sm font-bold text-white tabular-nums tracking-tighter">{eyeStats.duration}s</div>
               </div>
             </div>
 

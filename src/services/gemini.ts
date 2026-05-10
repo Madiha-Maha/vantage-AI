@@ -49,15 +49,15 @@ export class GeminiService {
     Answer Transcript: "${transcript}"
     Speaking Speed: ${speakingSpeed} words per minute.
 
-    Provide a detailed analysis including:
-    1. A score from 0-100 based on relevance and quality.
-    2. A confidence score from 0-100 (estimated from tone and word choice).
-    3. Keywords found that are relevant to the role.
-    4. 3 specific improvement tips.
-    5. An estimated eye contact score from 0-100 (since we can't see the video here, base it on the clarity and directness of the speech).
-
-    Return as JSON matching the QuestionAnalysis interface.
-    CRITICAL: In your tips and analysis, do NOT refer to yourself as an AI, bot, or machine. Provide feedback as a professional assessor.`;
+    Provide a professional analysis including:
+    1. Score (0-100).
+    2. Confidence (0-100).
+    3. Keywords found.
+    4. 3 specific improvements.
+    5. Eye contact score (estimate from clarity).
+    
+    Format carefully as JSON. No prose.
+    CRITICAL: ACT AS A SENIOR HUMAN ASSESSOR. NEVER MENTION AI.`;
 
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -110,10 +110,10 @@ export class GeminiService {
       Current Interview Question: "${question}"
       Candidate's Question to you: "${userQuery}"
       
-      Provide a highly professional, encouraging, and tactical response. If they ask for a hint, give them structural points (e.g., "Mention your experience with X"). If they ask for a sample answer, provide a concise high-impact response.
+      Provide a professional, encouraging response. 
+      Keep it tactical and concise.
       
-      Keep the response professional, concise, and insightful.
-      CRITICAL: Do NOT mention that you are an AI, bot, machine, or large language model. Speak from the perspective of a senior human mentor or career coach.
+      CRITICAL: Speak as a human human mentor. Never mention being an AI.
     `;
 
     try {
@@ -125,6 +125,42 @@ export class GeminiService {
       return response.text || "Focus on the STAR method (Situation, Task, Action, Result) to structure your response.";
     } catch (error) {
       return "I'm having trouble connecting to my neural network. Try focusing on your core value proposition.";
+    }
+  }
+
+  static async askMentorStream(
+    question: string, 
+    userQuery: string, 
+    role: string, 
+    industry: string,
+    onChunk: (chunk: string) => void
+  ): Promise<void> {
+    const prompt = `
+      You are an elite career coach and expert interviewer. 
+      The candidate is practicing for a ${role} role in the ${industry} industry.
+      
+      Current Interview Question: "${question}"
+      Candidate's Question to you: "${userQuery}"
+      
+      Provide a highly professional, encouraging, and tactical response. If they ask for a hint, give them structural points. If they ask for a sample answer, provide a concise high-impact response.
+      
+      Keep the response professional, concise, and insightful.
+      CRITICAL: Do NOT mention that you are an AI, bot, machine, or large language model. Speak from the perspective of a senior human mentor or career coach.
+    `;
+
+    try {
+      const result = await ai.models.generateContentStream({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+      });
+
+      for await (const chunk of result.stream) {
+        const text = chunk.text();
+        if (text) onChunk(text);
+      }
+    } catch (error) {
+      console.error("Streaming error:", error);
+      throw error;
     }
   }
 }
