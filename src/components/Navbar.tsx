@@ -1,0 +1,77 @@
+import { motion } from "motion/react";
+import { User, ClipboardList, Settings, LayoutDashboard, Rocket } from "lucide-react";
+import { cn } from "../lib/utils";
+import { UserProfile } from "../types";
+
+interface NavbarProps {
+  className?: string;
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+  profile: UserProfile | null;
+  onOpenProfile: () => void;
+  onOpenSettings: () => void;
+}
+
+export function Navbar({ className, activeTab, onTabChange, profile, onOpenProfile, onOpenSettings }: NavbarProps) {
+  const tabs = [
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { id: "interview", label: "New Interview", icon: Rocket },
+  ];
+
+  return (
+    <nav className={cn("sticky top-0 z-50 w-full border-b border-slate-800 bg-slate-950/80 backdrop-blur-md", className)}>
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <span className="font-bold text-white uppercase text-sm">V</span>
+          </div>
+          <span className="text-xl font-bold tracking-tight text-white">Vantage</span>
+        </div>
+
+        <div className="hidden md:flex items-center gap-1">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => onTabChange(tab.id)}
+              className={cn(
+                "relative flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors",
+                activeTab === tab.id ? "text-white" : "text-slate-500 hover:text-slate-300"
+              )}
+            >
+              <tab.icon className="h-4 w-4" />
+              {tab.label}
+              {activeTab === tab.id && (
+                <motion.div
+                  layoutId="active-tab"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-400"
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                />
+              )}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={onOpenSettings}
+            className="rounded-full bg-slate-900 p-2 text-slate-500 hover:text-slate-200 border border-slate-800 transition-colors"
+          >
+            <Settings className="h-5 w-5" />
+          </button>
+          <button 
+            onClick={onOpenProfile}
+            className="h-10 w-10 rounded-xl bg-slate-800 border border-slate-700 overflow-hidden hover:border-indigo-500/50 transition-all group shadow-inner"
+          >
+            {profile?.avatar ? (
+              <img src={profile.avatar} alt="Avatar" className="h-full w-full object-cover group-hover:scale-110 transition-transform" />
+            ) : (
+              <div className="h-full w-full flex items-center justify-center">
+                <User className="h-5 w-5 text-slate-500 group-hover:text-indigo-400 transition-colors" />
+              </div>
+            )}
+          </button>
+        </div>
+      </div>
+    </nav>
+  );
+}
