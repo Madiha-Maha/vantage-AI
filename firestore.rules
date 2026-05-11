@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 0.1 Common helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // 2. Validation Blueprints
+    function isValidUser(data) {
+      return data.updatedAt == request.time &&
+             (data.name == null || (data.name is string && data.name.size() <= 100)) &&
+             (data.title == null || (data.title is string && data.title.size() <= 200)) &&
+             (data.bio == null || (data.bio is string && data.bio.size() <= 1000));
+    }
+
+    function isValidSession(data) {
+      return data.keys().hasAll(['date', 'role', 'difficulty', 'overallScore', 'feedback', 'questions']) &&
+             data.date == request.time &&
+             data.role is string && data.role.size() <= 200 &&
+             data.difficulty is string &&
+             data.overallScore is number &&
+             data.feedback is string && data.feedback.size() <= 5000 &&
+             data.questions is list && data.questions.size() <= 20;
+    }
+
+    // 3. Path Variable Hardening & Explicit Rules
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidUser(incoming());
+      
+      match /sessions/{sessionId} {
+        // ID Poisoning Guard
+        allow get: if isOwner(userId) && isValidId(sessionId);
+        allow list: if isOwner(userId);
+        
+        allow create: if isOwner(userId) && isValidId(sessionId) && isValidSession(incoming());
+        
+        // Tiered Identity logic: Sessions are mostly immutable once submitted, but we allow deletion
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}

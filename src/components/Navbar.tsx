@@ -1,8 +1,9 @@
 import { Logo } from "./Logo";
 import { motion } from "motion/react";
-import { User, Settings, LayoutDashboard, Rocket } from "lucide-react";
+import { User, Settings, LayoutDashboard, Rocket, LogOut } from "lucide-react";
 import { cn } from "../lib/utils";
 import { UserProfile } from "../types";
+import { useAuth } from "../lib/AuthContext";
 
 interface NavbarProps {
   className?: string;
@@ -14,6 +15,7 @@ interface NavbarProps {
 }
 
 export function Navbar({ className, activeTab, onTabChange, profile, onOpenProfile, onOpenSettings }: NavbarProps) {
+  const { logout } = useAuth();
   const tabs = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "interview", label: "New Interview", icon: Rocket },
@@ -53,6 +55,13 @@ export function Navbar({ className, activeTab, onTabChange, profile, onOpenProfi
             className="rounded-full bg-slate-900 p-2 text-slate-500 hover:text-slate-200 border border-slate-800 transition-colors"
           >
             <Settings className="h-5 w-5" />
+          </button>
+          <button 
+            onClick={logout}
+            className="rounded-full bg-slate-900 p-2 text-slate-500 hover:text-rose-400 border border-slate-800 transition-colors"
+            title="Neural Terminate"
+          >
+            <LogOut className="h-5 w-5" />
           </button>
           <button 
             onClick={onOpenProfile}

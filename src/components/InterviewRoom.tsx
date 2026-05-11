@@ -133,6 +133,7 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
   const [eyeStats, setEyeStats] = useState({ direction: "Center", duration: 0, isMaintaining: true });
   const [speechSupported, setSpeechSupported] = useState(true);
   const [mediaError, setMediaError] = useState<string | null>(null);
+  const [smartHint, setSmartHint] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -168,21 +169,32 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
   };
 
   const initMedia = async () => {
+    setMediaError(null);
     try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Your browser does not support camera or microphone access.");
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: true,
       });
       streamRef.current = stream;
       setPeripheralsStatus({ video: true, audio: true });
-      setMediaError(null);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to get media", err);
       setPeripheralsStatus({ video: false, audio: false });
-      setMediaError("Permission Denied: Ensure camera and microphone access is enabled in your browser settings to proceed with the assessment.");
+      
+      let msg = "Permission Denied: Ensure camera and microphone access is enabled in your browser settings.";
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        msg = "Privacy Lock: Please click the 'Camera Icon' in your browser address bar and allow access to continue.";
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        msg = "No Device Found: We couldn't detect a camera or microphone. Please connect a device.";
+      }
+      setMediaError(msg);
     }
   };
 
@@ -210,7 +222,9 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
         let interimTranscript = "";
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
-            setTranscript((prev) => prev + event.results[i][0].transcript + " ");
+            const newText = event.results[i][0].transcript;
+            setTranscript((prev) => prev + newText + " ");
+            setSmartHint(null); // Clear hint on activity
           } else {
             interimTranscript += event.results[i][0].transcript;
           }
@@ -227,6 +241,7 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
 
   const stopRecording = async () => {
     setIsRecording(false);
+    setSmartHint(null);
     if (recognitionRef.current) {
       recognitionRef.current.stop();
     }
@@ -291,6 +306,27 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
       setIsMentorLoading(false);
     }
   };
+
+  const triggerSmartHint = async () => {
+    if (!isRecording || isAnalysing) return;
+    try {
+      const hint = await GeminiService.askMentor(currentQuestion.text, "I'm feeling stuck. Give me a 1-sentence quick tip to continue my answer.", config.role, "General");
+      setSmartHint(hint);
+    } catch (e) {
+      console.error("Failed to generate hint", e);
+    }
+  };
+
+  // Silence detection for smart hints
+  useEffect(() => {
+    let timeout: any;
+    if (isRecording && transcript === "") {
+      timeout = setTimeout(() => {
+        if (!smartHint) triggerSmartHint();
+      }, 10000); // 10 seconds of silence at start
+    }
+    return () => clearTimeout(timeout);
+  }, [isRecording, transcript]);
 
   if (isInitializing) {
     return (
@@ -468,6 +504,24 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
             </div>
 
             <Chronometer isRecording={isRecording} onWarning={setTimerWarning} />
+            
+            <AnimatePresence>
+              {smartHint && (
+                <motion.div 
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="bg-indigo-600 border border-indigo-400 p-4 rounded-2xl shadow-xl max-w-xs"
+                >
+                  <div className="flex items-start gap-3">
+                     <Sparkles className="h-4 w-4 text-white shrink-0 mt-0.5" />
+                     <p className="text-white text-xs font-medium leading-relaxed italic">
+                       {smartHint}
+                     </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <div className="absolute top-6 right-6 flex items-center gap-1.5 backdrop-blur-md bg-slate-950/40 p-3 rounded-2xl border border-white/10">

@@ -20,83 +20,52 @@ import { InterviewConfig, InterviewSession, InterviewQuestion, UserProfile, User
 import { motion, AnimatePresence } from 'motion/react';
 import { Profile } from './components/Profile';
 import { SettingsModal } from './components/SettingsModal';
+import { useAuth } from './lib/AuthContext';
+import { Login } from './components/Login';
+import { subscribeToHistory, saveSession } from './lib/firestoreService';
+import { Loader2 } from 'lucide-react';
 
 export default function App() {
+  const { user, profile, settings, loading, updateProfile, updateSettings } = useAuth();
   const [activeTab, setActiveTab] = useState('landing');
   const [history, setHistory] = useState<InterviewSession[]>([]);
   const [currentConfig, setCurrentConfig] = useState<InterviewConfig | null>(null);
   const [currentResults, setCurrentResults] = useState<InterviewQuestion[] | null>(null);
   const [hasSavedCurrent, setHasSavedCurrent] = useState(false);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [settings, setSettings] = useState<UserSettings>({
-    theme: 'dark',
-    notifications: true,
-    recordingEnabled: true,
-    privacyMode: false,
-    biometricAnalysis: true
-  });
 
-  // Load history & profile from localStorage
+  // Load history from Firestore
   useEffect(() => {
-    const savedHistory = localStorage.getItem('interview_history');
-    if (savedHistory) {
-      try {
-        const parsed = JSON.parse(savedHistory);
-        setHistory(parsed.map((s: any) => ({ ...s, date: new Date(s.date) })));
-      } catch (e) {
-        console.error("Failed to load history", e);
-      }
+    if (!user) {
+      setHistory([]);
+      return;
     }
+    const unsubscribe = subscribeToHistory(user.uid, setHistory);
+    return () => unsubscribe();
+  }, [user]);
 
-    const savedProfile = localStorage.getItem('user_profile');
-    if (savedProfile) {
-      try {
-        setUserProfile(JSON.parse(savedProfile));
-      } catch (e) {
-        console.error("Failed to load profile", e);
-      }
-    }
-
-    const savedSettings = localStorage.getItem('user_settings');
-    if (savedSettings) {
-      try {
-        setSettings(JSON.parse(savedSettings));
-      } catch (e) {
-        console.error("Failed to load settings", e);
-      }
-    }
-  }, []);
-
-  const handleSaveProfile = (profile: UserProfile) => {
-    setUserProfile(profile);
-    localStorage.setItem('user_profile', JSON.stringify(profile));
+  const handleSaveProfile = async (newProfile: UserProfile) => {
+    await updateProfile(newProfile);
   };
 
-  const handleSaveSettings = (newSettings: UserSettings) => {
-    setSettings(newSettings);
-    localStorage.setItem('user_settings', JSON.stringify(newSettings));
+  const handleSaveSettings = async (newSettings: UserSettings) => {
+    await updateSettings(newSettings);
   };
 
-  const saveToHistory = (questions: InterviewQuestion[]) => {
-    if (!currentConfig) return;
+  const saveToHistory = async (questions: InterviewQuestion[]) => {
+    if (!currentConfig || !user) return;
 
     const overallScore = Math.round(questions.reduce((acc, q) => acc + (q.analysis?.score || 0), 0) / questions.length);
     
-    const newSession: InterviewSession = {
-      id: Math.random().toString(36).substring(7),
+    await saveSession(user.uid, {
       date: new Date(),
       role: currentConfig.role,
       difficulty: currentConfig.difficulty,
       questions,
       overallScore,
       feedback: "Great job on your assessment. Focus on keyword density in future sessions.",
-    };
-
-    const newHistory = [newSession, ...history];
-    setHistory(newHistory);
-    localStorage.setItem('interview_history', JSON.stringify(newHistory));
+    });
   };
 
   const handleStartInterview = (config: InterviewConfig) => {
@@ -149,7 +118,7 @@ export default function App() {
         return <Dashboard 
           history={history} 
           onStartNew={() => setActiveTab('setup')} 
-          profile={userProfile}
+          profile={profile}
           onOpenProfile={() => setIsProfileOpen(true)}
         />;
       default:
@@ -157,13 +126,26 @@ export default function App() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-8">
+        <Loader2 className="h-12 w-12 text-indigo-500 animate-spin mb-6" />
+        <div className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em]">Synchronizing Neural Identity</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Login />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 selection:bg-indigo-500/30">
       {activeTab !== 'landing' && (
         <Navbar 
           activeTab={activeTab} 
           onTabChange={setActiveTab} 
-          profile={userProfile} 
+          profile={profile} 
           onOpenProfile={() => setIsProfileOpen(true)}
           onOpenSettings={() => setIsSettingsOpen(true)}
         />
@@ -185,12 +167,12 @@ export default function App() {
         <AnimatePresence>
           {isProfileOpen && (
             <Profile 
-              profile={userProfile} 
+              profile={profile} 
               onSave={handleSaveProfile} 
               onClose={() => setIsProfileOpen(false)} 
             />
           )}
-          {isSettingsOpen && (
+          {isSettingsOpen && settings && (
             <SettingsModal 
               settings={settings}
               onSave={handleSaveSettings}
