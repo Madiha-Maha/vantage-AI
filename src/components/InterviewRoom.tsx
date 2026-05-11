@@ -141,6 +141,8 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
   // Removed main thread interval loops to sub-components for performance
   const recognitionRef = useRef<any>(null);
   const startTimeRef = useRef<number>(0);
+  const isRecordingRef = useRef(false);
+  const transcriptRef = useRef("");
 
   useEffect(() => {
     const runSetup = async () => {
@@ -206,7 +208,9 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
 
   const startRecording = () => {
     setIsRecording(true);
+    isRecordingRef.current = true;
     setTranscript("");
+    transcriptRef.current = "";
     startTimeRef.current = Date.now();
 
     // Init Web Speech API
@@ -223,7 +227,8 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
             const newText = event.results[i][0].transcript;
-            setTranscript((prev) => prev + newText + " ");
+            transcriptRef.current += newText + " ";
+            setTranscript(transcriptRef.current);
             setSmartHint(null); // Clear hint on activity
           } else {
             interimTranscript += event.results[i][0].transcript;
@@ -231,7 +236,21 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
         }
       };
 
-      recognition.onerror = (e: any) => console.error("Speech Recognition Error", e);
+      recognition.onerror = (e: any) => {
+        console.error("Speech Recognition Error", e);
+      };
+      
+      recognition.onend = () => {
+        // Restart if we are still supposed to be recording
+        if (isRecordingRef.current && recognitionRef.current === recognition) {
+          try {
+            recognition.start();
+          } catch (e) {
+            console.error("Failed to restart recognition", e);
+          }
+        }
+      };
+
       recognition.start();
       recognitionRef.current = recognition;
     } else {
@@ -241,6 +260,7 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
 
   const stopRecording = async () => {
     setIsRecording(false);
+    isRecordingRef.current = false;
     setSmartHint(null);
     if (recognitionRef.current) {
       recognitionRef.current.stop();
@@ -286,13 +306,14 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
   };
 
   const askMentor = async () => {
-    if (!mentorQuery.trim()) return;
+    if (!mentorQuery.trim() || !questions[currentIdx]) return;
+    const qText = questions[currentIdx].text;
     setIsMentorLoading(true);
     setMentorResponse("");
     try {
       // Use streaming for a much faster "Wow" response feel
       await GeminiService.askMentorStream(
-        currentQuestion.text, 
+        qText, 
         mentorQuery, 
         config.role, 
         config.industry,

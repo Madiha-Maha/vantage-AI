@@ -10,7 +10,13 @@ export function Login() {
 
   const handleEnter = async () => {
     setLoading(true);
-    await signInAsGuest();
+    try {
+      await signInAsGuest();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

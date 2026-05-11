@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "motion/react";
-import { BarChart3, Clock, ArrowUpRight, TrendingUp, Sparkles, Plus, ChevronRight, User, Activity } from "lucide-react";
+import { BarChart3, Clock, ArrowUpRight, TrendingUp, Sparkles, Plus, ChevronRight, User, Activity, Zap } from "lucide-react";
 import { InterviewSession } from "../types";
 import { format } from "date-fns";
 

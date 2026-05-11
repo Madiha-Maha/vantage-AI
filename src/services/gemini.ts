@@ -16,9 +16,22 @@ function getAI() {
 
 const MODEL_NAME = "gemini-1.5-flash";
 
+const extractJson = (text: string) => {
+  try {
+    const jsonMatch = text.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+    return JSON.parse(text);
+  } catch (e) {
+    console.warn("JSON extraction failed, returning default", e);
+    return null;
+  }
+};
+
 export class GeminiService {
   static async generateQuestions(config: InterviewConfig, count: number = 5): Promise<InterviewQuestion[]> {
-    const prompt = `Role: ${config.role}, Level: ${config.level}, Industry: ${config.industry}. Generate ${count} interview questions in JSON: [{id, text}]. No other text.`;
+    const prompt = `Role: ${config.role}, Difficulty: ${config.difficulty}, Industry: ${config.industry}. Generate ${count} interview questions in JSON: [{id, text}]. No other text.`;
 
     try {
       const response = await getAI().models.generateContent({
@@ -30,7 +43,10 @@ export class GeminiService {
       });
 
       const text = response.text || "";
-      return JSON.parse(text);
+      return extractJson(text) || [
+        { id: "1", text: "Tell me about your career highlights." },
+        { id: "2", text: "How do you handle difficult workplace challenges?" }
+      ];
     } catch (e) {
       console.error("Fast Question Generation Failed", e);
       return [
@@ -61,7 +77,8 @@ export class GeminiService {
       });
 
       const text = response.text || "";
-      const analysis = JSON.parse(text);
+      const analysis = extractJson(text);
+      if (!analysis) throw new Error("Could not parse analysis");
       return { ...analysis, speakingSpeed };
     } catch (e) {
       console.error("Failed to parse analysis", e);
