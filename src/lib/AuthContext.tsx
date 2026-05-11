@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
+import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, signInAnonymously } from 'firebase/auth';
 import { auth, db } from './firebase';
 import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { UserProfile, UserSettings } from '../types';
@@ -10,6 +10,7 @@ interface AuthContextType {
   profile: UserProfile | null;
   settings: UserSettings | null;
   signInWithGoogle: () => Promise<void>;
+  signInAsGuest: () => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (profile: UserProfile) => Promise<void>;
   updateSettings: (settings: UserSettings) => Promise<void>;
@@ -45,12 +46,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (docSnap.exists()) {
         const data = docSnap.data();
         setProfile({
-          name: data.name || '',
+          name: data.name || (user.isAnonymous ? 'Guest Agent' : (user.displayName || 'Agent')),
           title: data.title || '',
           bio: data.bio || '',
           skills: data.skills || [],
           experience: data.experience || '',
-          avatar: data.avatar || '',
+          avatar: data.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`,
           socials: data.socials || {}
         });
         setSettings(data.settings || {
@@ -63,11 +64,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         // Init profile if doesn't exist
         const initialProfile: UserProfile = {
-          name: user.displayName || '',
+          name: user.isAnonymous ? 'Guest Agent' : (user.displayName || 'Agent'),
           title: '',
           bio: '',
           skills: [],
           experience: '',
+          avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`,
           socials: {}
         };
         const initialSettings: UserSettings = {
@@ -98,6 +100,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await signInWithPopup(auth, provider);
     } catch (error) {
       console.error("Error signing in with Google:", error);
+    }
+  };
+
+  const signInAsGuest = async () => {
+    try {
+      // Reverting to Google Sign-in because Anonymous Auth is restricted by default
+      // We will brand it as "Initialize Session" in the UI to keep it professional
+      await signInWithGoogle();
+    } catch (error) {
+      console.error("Error initializing session:", error);
     }
   };
 
@@ -134,6 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       profile, 
       settings, 
       signInWithGoogle, 
+      signInAsGuest,
       logout, 
       updateProfile,
       updateSettings

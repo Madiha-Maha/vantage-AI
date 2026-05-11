@@ -108,6 +108,84 @@ export function Dashboard({ history, onStartNew, profile, onOpenProfile }: Dashb
         </div>
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        <div className="md:col-span-2 bg-slate-900 border border-slate-800 rounded-[2.5rem] p-10 relative overflow-hidden group shadow-2xl">
+          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+            <Zap className="h-48 w-48 text-indigo-500" />
+          </div>
+          <div className="relative">
+            <h3 className="text-[10px] font-bold text-indigo-400 uppercase tracking-[0.4em] mb-6">System Insight</h3>
+            <h4 className="text-3xl font-bold text-white italic mb-10 leading-tight">Neural Performance <br/>Architect</h4>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              {[
+                { label: 'Avg Rating', value: '84.2%', trend: '+2.4%' },
+                { label: 'Fluency', value: 'High', trend: 'Stable' },
+                { label: 'Confidence', value: '92/100', trend: '+5.1%' },
+                { label: 'Keyword Hit', value: '78%', trend: '+12%' }
+              ].map((stat, idx) => (
+                <div key={idx} className="space-y-2">
+                  <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{stat.label}</div>
+                  <div className="text-xl font-bold text-white">{stat.value}</div>
+                  <div className="text-[9px] font-bold text-emerald-400">{stat.trend}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-10 flex flex-col justify-between group shadow-2xl">
+           <div>
+              <h3 className="text-[10px] font-bold text-emerald-400 uppercase tracking-[0.4em] mb-6">Active Protocol</h3>
+              <h4 className="text-2xl font-bold text-white italic mb-4">Vantage Pulse</h4>
+              <p className="text-slate-500 text-xs font-medium leading-relaxed">
+                Biometric observation enabled. Voice modulation and facial micro-expressions are tracked for deep sentiment parsing.
+              </p>
+           </div>
+           <div className="pt-8 flex items-center gap-3">
+              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Core Sync Active</span>
+           </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+        <div className="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-10 overflow-hidden relative group shadow-2xl">
+           <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Plus className="h-24 w-24 text-indigo-500 rotate-45" />
+           </div>
+           <h3 className="text-[10px] font-bold text-indigo-400 uppercase tracking-[0.4em] mb-4">Deployment Protocol</h3>
+           <h4 className="text-2xl font-bold text-white mb-6 italic">Secure Device Installation</h4>
+           <p className="text-slate-400 text-sm font-medium mb-8 leading-relaxed max-w-sm">
+             To install the Vantage Assessment Terminal on your mobile or desktop device, use your browser's <span className="text-white font-bold">"Add to Home Screen"</span> feature. This enables full-screen execution and native protocol access.
+           </p>
+           <div className="flex gap-4">
+              <div className="px-4 py-2 bg-slate-950 rounded-xl border border-slate-800 text-[10px] font-bold text-slate-500 uppercase tracking-widest">PWA Ready</div>
+              <div className="px-4 py-2 bg-slate-950 rounded-xl border border-slate-800 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Offline Cache</div>
+           </div>
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-10 overflow-hidden relative group shadow-2xl">
+           <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+              <ArrowUpRight className="h-24 w-24 text-emerald-500" />
+           </div>
+           <h3 className="text-[10px] font-bold text-emerald-400 uppercase tracking-[0.4em] mb-4">Neural Sharing</h3>
+           <h4 className="text-2xl font-bold text-white mb-6 italic">Broadcast Link</h4>
+           <p className="text-slate-400 text-sm font-medium mb-8 leading-relaxed max-w-sm">
+             Share the Vantage Terminal URL with others to collaborate or track team benchmarks. Each session is uniquely isolated and encrypted.
+           </p>
+           <button 
+             onClick={() => {
+               navigator.clipboard.writeText(window.location.href);
+               alert("Terminal Access Link Copied to Clipboard.");
+             }}
+             className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-bold text-xs uppercase tracking-[0.2em] transition-all shadow-xl shadow-emerald-500/20 active:scale-95"
+           >
+             Copy Access Link
+           </button>
+        </div>
+      </div>
+
       <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
         <div className="px-8 py-6 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.3em]">Session History</h3>

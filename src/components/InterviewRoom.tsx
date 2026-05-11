@@ -252,7 +252,7 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
 
   const analyseAnswer = async (duration: number) => {
     setIsAnalysing(true);
-    const currentQuestion = questions[currentIdx];
+    const currentQuestion = questions[currentIdx] || { text: "Session error", id: "error" };
     
     // Simulate some transcript if Web Speech API failed or was short
     const finalTranscript = transcript || "I would approach this problem by first analyzing the requirements and then designing a scalable solution using modern tools like React and TypeScript. Confidence is key in such situations.";
@@ -359,7 +359,7 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
                 </div>
                 <div className="text-center space-y-2">
                    <h3 className="text-xl font-bold text-white tracking-widest uppercase">Peripherals Link</h3>
-                   <p className="text-slate-500 text-xs font-bold tracking-[0.2em] uppercase">Checking Neural Input Streams...</p>
+                   <p className="text-slate-500 text-xs font-bold tracking-[0.2em] uppercase">Checking Virtual Streams...</p>
                 </div>
               </motion.div>
             )}
@@ -391,7 +391,7 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
                         />
                       ))}
                    </div>
-                   <h3 className="text-lg font-bold text-white tracking-[0.3em] uppercase">Constructing Reality</h3>
+                   <h3 className="text-lg font-bold text-white tracking-[0.3em] uppercase">Tailoring Environment</h3>
                    <p className="text-slate-500 text-[10px] font-bold tracking-[0.2em] uppercase leading-relaxed">
                       Compiling tailored assessment architect for <br/>
                       <span className="text-indigo-400">"{config.role}"</span>
@@ -417,7 +417,7 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
                    </motion.div>
                 </div>
                 <div className="text-center">
-                   <div className="text-emerald-400 text-sm font-bold tracking-[0.4em] uppercase">Hyperlink Established</div>
+                   <div className="text-emerald-400 text-sm font-bold tracking-[0.4em] uppercase">Connection Established</div>
                 </div>
               </motion.div>
             )}
@@ -428,31 +428,39 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-6 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center gap-3 text-rose-400 text-xs font-medium max-w-sm"
+            className="mt-6 p-6 rounded-3xl bg-rose-500/10 border border-rose-500/20 flex flex-col gap-4 text-rose-400 text-xs font-medium max-w-sm"
           >
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            <span>{mediaError}</span>
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{mediaError}</span>
+            </div>
             <button 
               onClick={() => { setMediaError(null); initMedia(); }}
-              className="ml-auto underline font-bold"
+              className="w-full py-3 bg-rose-500 text-white rounded-xl font-bold hover:bg-rose-600 transition-colors"
             >
-              Retry
+              Retry Connection
             </button>
           </motion.div>
+        )}
+
+        {questions.length === 0 && !isInitializing && (
+           <div className="mt-8 text-center text-slate-500 text-xs font-bold uppercase tracking-widest">
+             Waiting for assessment data...
+           </div>
         )}
 
         <div className="mt-12 w-full flex items-center justify-between border-t border-slate-800/50 pt-8">
            <div className="flex gap-12">
               <div className="space-y-1">
-                 <div className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Signal Integrity</div>
-                 <div className="text-xs text-slate-400 font-bold">100% Operational</div>
+                 <div className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">System Health</div>
+                 <div className="text-xs text-slate-400 font-bold">Optimal</div>
               </div>
               <div className="space-y-1">
-                 <div className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Neural Latency</div>
-                 <div className="text-xs text-slate-400 font-bold">4ms Secure Path</div>
+                 <div className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Protocol</div>
+                 <div className="text-xs text-slate-400 font-bold">Secure V4</div>
               </div>
            </div>
-           <div className="text-[9px] text-slate-700 font-bold uppercase tracking-[0.3em]">Axis Terminal v4.0.2</div>
+           <div className="text-[9px] text-slate-700 font-bold uppercase tracking-[0.3em]">Professional Suite</div>
         </div>
       </div>
     );
@@ -489,14 +497,14 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
           </div>
 
           {/* Overlay UI */}
-          <div className="absolute top-6 left-6 flex flex-col gap-3">
-            <div className="flex gap-3">
-              <div className="bg-slate-950/60 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-bold text-white uppercase tracking-widest flex items-center gap-2 border border-white/10 shadow-lg">
-                <div className={cn("h-2 w-2 rounded-full", isRecording ? "bg-rose-500 animate-pulse" : "bg-slate-500")} />
-                {isRecording ? "Neural Capture" : "Ready State"}
+          <div className="absolute top-6 left-6 flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-slate-950/80 backdrop-blur-xl px-4 py-2 rounded-xl text-[10px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-3 border border-white/10 shadow-2xl">
+                <div className={cn("h-1.5 w-1.5 rounded-full", isRecording ? "bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.8)]" : "bg-slate-500")} />
+                {isRecording ? "Neural Capture: Active" : "Status: Ready"}
               </div>
               {isAnalysing && (
-                <div className="bg-indigo-500/20 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-2 border border-indigo-500/30">
+                <div className="bg-indigo-500/20 backdrop-blur-md px-4 py-2 rounded-xl text-[10px] font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-3 border border-indigo-500/30">
                   <Loader2 className="h-3 w-3 animate-spin" />
                   Processing
                 </div>
