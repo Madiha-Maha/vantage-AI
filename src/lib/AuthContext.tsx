@@ -53,6 +53,7 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 
 interface AuthContextType {
   user: User | null;
+  isGuest: boolean;
   loading: boolean;
   profile: UserProfile | null;
   settings: UserSettings | null;
@@ -65,16 +66,31 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const GUEST_PROFILE_KEY = 'vantage_guest_profile';
+const GUEST_SETTINGS_KEY = 'vantage_guest_settings';
+const GUEST_USER_KEY = 'vantage_is_guest';
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isGuest, setIsGuest] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [settings, setSettings] = useState<UserSettings | null>(null);
 
   useEffect(() => {
+    // Check for existing guest session
+    const wasGuest = localStorage.getItem(GUEST_USER_KEY) === 'true';
+    if (wasGuest) {
+      setIsGuest(true);
+    }
+
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       setUser(user);
-      if (!user) {
+      if (user) {
+        setIsGuest(false);
+        localStorage.removeItem(GUEST_USER_KEY);
+      }
+      if (!user && !wasGuest) {
         setProfile(null);
         setSettings(null);
         setLoading(false);
@@ -85,6 +101,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (isGuest) {
+      const savedProfile = localStorage.getItem(GUEST_PROFILE_KEY);
+      const savedSettings = localStorage.getItem(GUEST_SETTINGS_KEY);
+
+      if (savedProfile) {
+        setProfile(JSON.parse(savedProfile));
+      } else {
+        const initialProfile: UserProfile = {
+          name: 'Guest Agent',
+          title: 'Guest Explorer',
+          bio: 'Exploring the cognitive edge in guest mode.',
+          skills: ['Guest Access'],
+          experience: 'System Guest',
+          avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=guest`,
+          socials: {}
+        };
+        setProfile(initialProfile);
+        localStorage.setItem(GUEST_PROFILE_KEY, JSON.stringify(initialProfile));
+      }
+
+      if (savedSettings) {
+        setSettings(JSON.parse(savedSettings));
+      } else {
+        const initialSettings: UserSettings = {
+          theme: 'dark',
+          notifications: true,
+          recordingEnabled: true,
+          privacyMode: true,
+          biometricAnalysis: true
+        };
+        setSettings(initialSettings);
+        localStorage.setItem(GUEST_SETTINGS_KEY, JSON.stringify(initialSettings));
+      }
+      setLoading(false);
+      return;
+    }
+
     if (!user) return;
 
     // Listen to profile and settings
@@ -93,7 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (docSnap.exists()) {
         const data = docSnap.data();
         setProfile({
-          name: data.name || (user.isAnonymous ? 'Guest Agent' : (user.displayName || 'Agent')),
+          name: data.name || (user.displayName || 'Agent'),
           title: data.title || '',
           bio: data.bio || '',
           skills: data.skills || [],
@@ -111,7 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         // Init profile if doesn't exist
         const initialProfile: UserProfile = {
-          name: user.isAnonymous ? 'Guest Agent' : (user.displayName || 'Agent'),
+          name: user.displayName || 'Agent',
           title: '',
           bio: '',
           skills: [],
@@ -138,13 +191,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => unsubscribeSnapshot();
-  }, [user]);
+  }, [user, isGuest]);
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
     try {
       await signInWithPopup(auth, provider);
+      setIsGuest(false);
+      localStorage.removeItem(GUEST_USER_KEY);
     } catch (error: any) {
       if (error.code === 'auth/popup-closed-by-user') {
         const cancelError = new Error("Sign-in cancelled. Please keep the window open to authenticate.");
@@ -157,7 +212,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw blockError;
       }
       if (error.code === 'auth/unauthorized-domain') {
-        const domainError = new Error("Unauthorized Domain: Please add this domain to your Firebase Console settings (Authentication > Settings > Authorized domains).");
+        const domainError = new Error("Unauthorized Domain: Please add this domain to your Firebase Console settings.");
         (domainError as any).code = error.code;
         throw domainError;
       }
@@ -167,23 +222,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInAsGuest = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (error: any) {
-      console.error("Error initializing session:", error);
-      throw error;
-    }
+    setIsGuest(true);
+    localStorage.setItem(GUEST_USER_KEY, 'true');
   };
 
   const logout = async () => {
     try {
       await signOut(auth);
+      setIsGuest(false);
+      localStorage.removeItem(GUEST_USER_KEY);
     } catch (error) {
       console.error("Error signing out:", error);
     }
   };
 
   const updateProfile = async (newProfile: UserProfile) => {
+    if (isGuest) {
+      setProfile(newProfile);
+      localStorage.setItem(GUEST_PROFILE_KEY, JSON.stringify(newProfile));
+      return;
+    }
     if (!user) return;
     const userDocRef = doc(db, 'users', user.uid);
     try {
@@ -197,6 +255,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateSettings = async (newSettings: UserSettings) => {
+    if (isGuest) {
+      setSettings(newSettings);
+      localStorage.setItem(GUEST_SETTINGS_KEY, JSON.stringify(newSettings));
+      return;
+    }
     if (!user) return;
     const userDocRef = doc(db, 'users', user.uid);
     try {
@@ -212,6 +275,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider value={{ 
       user, 
+      isGuest,
       loading, 
       profile, 
       settings, 

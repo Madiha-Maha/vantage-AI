@@ -49,7 +49,19 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
   throw new Error(JSON.stringify(errInfo));
 }
 
+const GUEST_SESSIONS_KEY = 'vantage_guest_sessions';
+
 export function subscribeToHistory(userId: string, callback: (history: InterviewSession[]) => void) {
+  if (userId === 'guest') {
+    const saved = localStorage.getItem(GUEST_SESSIONS_KEY);
+    const history = saved ? JSON.parse(saved).map((s: any) => ({
+      ...s,
+      date: new Date(s.date)
+    })) : [];
+    callback(history);
+    return () => {};
+  }
+
   const path = `users/${userId}/sessions`;
   const q = query(collection(db, path), orderBy('date', 'desc'));
 
@@ -69,6 +81,20 @@ export function subscribeToHistory(userId: string, callback: (history: Interview
 }
 
 export async function saveSession(userId: string, session: Omit<InterviewSession, 'id'>) {
+  if (userId === 'guest') {
+    const saved = localStorage.getItem(GUEST_SESSIONS_KEY);
+    const history = saved ? JSON.parse(saved) : [];
+    const sessionId = Math.random().toString(36).substring(7);
+    const newSession = {
+      ...session,
+      id: sessionId,
+      date: new Date().toISOString()
+    };
+    history.unshift(newSession);
+    localStorage.setItem(GUEST_SESSIONS_KEY, JSON.stringify(history));
+    return sessionId;
+  }
+
   const path = `users/${userId}/sessions`;
   try {
     const sessionId = Math.random().toString(36).substring(7);

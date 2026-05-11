@@ -119,7 +119,7 @@ export function Login() {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.7 }}
-              className="w-full"
+              className="w-full space-y-4"
             >
               <button
                 onClick={handleEnter}
@@ -132,11 +132,18 @@ export function Login() {
                     <Loader2 className="h-6 w-6 animate-spin" />
                   ) : (
                     <>
-                      Execute Sequence
+                      Execute Cloud Authentication
                       <Zap className="h-5 w-5 text-indigo-600" fill="currentColor" />
                     </>
                   )}
                 </span>
+              </button>
+
+              <button
+                onClick={signInAsGuest}
+                className="w-full px-8 py-6 bg-slate-900 border border-white/10 text-white rounded-[2rem] font-bold text-[10px] uppercase tracking-[0.4em] transition-all hover:bg-slate-800 hover:border-white/20 active:scale-98"
+              >
+                Continue as Guest (Local Mode)
               </button>
             </motion.div>
 

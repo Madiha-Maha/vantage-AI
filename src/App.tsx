@@ -26,7 +26,7 @@ import { subscribeToHistory, saveSession } from './lib/firestoreService';
 import { Loader2 } from 'lucide-react';
 
 export default function App() {
-  const { user, profile, settings, loading, updateProfile, updateSettings } = useAuth();
+  const { user, isGuest, profile, settings, loading, updateProfile, updateSettings } = useAuth();
   const [activeTab, setActiveTab] = useState('landing');
   const [history, setHistory] = useState<InterviewSession[]>([]);
   const [currentConfig, setCurrentConfig] = useState<InterviewConfig | null>(null);
@@ -35,15 +35,16 @@ export default function App() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Load history from Firestore
+  // Load history from Store (Cloud or Local)
   useEffect(() => {
-    if (!user) {
+    const userId = user?.uid || (isGuest ? 'guest' : null);
+    if (!userId) {
       setHistory([]);
       return;
     }
-    const unsubscribe = subscribeToHistory(user.uid, setHistory);
+    const unsubscribe = subscribeToHistory(userId, setHistory);
     return () => unsubscribe();
-  }, [user]);
+  }, [user, isGuest]);
 
   const handleSaveProfile = async (newProfile: UserProfile) => {
     await updateProfile(newProfile);
@@ -54,11 +55,12 @@ export default function App() {
   };
 
   const saveToHistory = async (questions: InterviewQuestion[]) => {
-    if (!currentConfig || !user) return;
+    const userId = user?.uid || (isGuest ? 'guest' : null);
+    if (!currentConfig || !userId) return;
 
-    const overallScore = Math.round(questions.reduce((acc, q) => acc + (q.analysis?.score || 0), 0) / questions.length);
+    const overallScore = Math.round(questions.reduce((acc, q) => acc + (q.analysis?.score || 0), 0) / (questions.length || 1));
     
-    await saveSession(user.uid, {
+    await saveSession(userId, {
       date: new Date(),
       role: currentConfig.role,
       difficulty: currentConfig.difficulty,
@@ -135,7 +137,7 @@ export default function App() {
     );
   }
 
-  if (!user) {
+  if (!user && !isGuest) {
     return <Login />;
   }
 
