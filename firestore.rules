@@ -30,19 +30,28 @@ service cloud.firestore {
     // 2. Validation Blueprints
     function isValidUser(data) {
       return data.updatedAt == request.time &&
-             (data.name == null || (data.name is string && data.name.size() <= 100)) &&
-             (data.title == null || (data.title is string && data.title.size() <= 200)) &&
-             (data.bio == null || (data.bio is string && data.bio.size() <= 1000));
+             data.keys().hasAll(['name', 'email', 'title', 'bio', 'avatar', 'skills', 'experience', 'socials', 'settings', 'updatedAt']) &&
+             data.name is string && data.name.size() <= 100 &&
+             data.email is string && data.email.size() <= 200 &&
+             data.title is string && data.title.size() <= 200 &&
+             data.bio is string && data.bio.size() <= 1000 &&
+             data.avatar is string && data.avatar.size() <= 1000 &&
+             data.skills is list && data.skills.size() <= 50 &&
+             data.experience is string && data.experience.size() <= 2000 &&
+             data.socials is map && data.socials.size() <= 10 &&
+             data.settings is map && data.settings.size() >= 5;
     }
 
     function isValidSession(data) {
       return data.keys().hasAll(['date', 'role', 'difficulty', 'overallScore', 'feedback', 'questions']) &&
+             data.keys().size() == 6 &&
              data.date == request.time &&
              data.role is string && data.role.size() <= 200 &&
-             data.difficulty is string &&
+             data.difficulty is string && data.difficulty.size() <= 50 &&
              data.overallScore is number &&
              data.feedback is string && data.feedback.size() <= 5000 &&
-             data.questions is list && data.questions.size() <= 20;
+             data.questions is list && data.questions.size() <= 20 &&
+             (data.questions.size() == 0 || data.questions[0] is map);
     }
 
     // 3. Path Variable Hardening & Explicit Rules

@@ -21,7 +21,7 @@ export function Login() {
       } else if (err.code === 'auth/popup-blocked') {
         setError("Popup blocked! Please enable popups in your browser and try again.");
       } else if (err.code === 'auth/unauthorized-domain') {
-        setError("Unauthorized Domain! Add this domain to your Firebase Console (Authentication > Settings > Authorized domains).");
+        setError(`Unauthorized Domain! Please add "${window.location.hostname}" to your Firebase Console (Authentication > Settings > Authorized domains).`);
       } else {
         setError(err.message || "Initialization failure. Check your connection or popup settings.");
       }
@@ -142,8 +142,8 @@ export function Login() {
 
             {error && (
               <motion.div 
-                initial={{ opacity: 0, h: 0 }}
-                animate={{ opacity: 1, h: 'auto' }}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
                 className="mt-8 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-3 w-full"
               >
                 <AlertCircle className="h-4 w-4 shrink-0" />

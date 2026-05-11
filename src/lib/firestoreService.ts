@@ -1,6 +1,6 @@
-import { collection, query, orderBy, onSnapshot, addDoc, doc, serverTimestamp, setDoc } from 'firebase/firestore';
-import { db } from './firebase';
-import { InterviewSession, InterviewQuestion } from '../types';
+import { collection, query, orderBy, onSnapshot, doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { db, auth } from './firebase';
+import { InterviewSession } from '../types';
 
 export enum OperationType {
   CREATE = 'create',
@@ -15,13 +15,33 @@ interface FirestoreErrorInfo {
   error: string;
   operationType: OperationType;
   path: string | null;
-  authInfo: any;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
+  }
 }
 
 function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
-    authInfo: {}, // Simplified for brevity in this helper, but ideally would include auth state
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData?.map(provider => ({
+        providerId: provider.providerId,
+        email: provider.email,
+      })) || []
+    },
     operationType,
     path
   };
@@ -29,7 +49,7 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
   throw new Error(JSON.stringify(errInfo));
 }
 
-export function subscribeToHistory(userId: string, callback: (history: InterviewSession[]) => void, onError?: (error: any) => void) {
+export function subscribeToHistory(userId: string, callback: (history: InterviewSession[]) => void) {
   const path = `users/${userId}/sessions`;
   const q = query(collection(db, path), orderBy('date', 'desc'));
 
@@ -44,15 +64,14 @@ export function subscribeToHistory(userId: string, callback: (history: Interview
     });
     callback(history);
   }, (error) => {
-    console.error("History Subscription Error:", error);
-    if (onError) onError(error);
+    handleFirestoreError(error, OperationType.GET, path);
   });
 }
 
 export async function saveSession(userId: string, session: Omit<InterviewSession, 'id'>) {
   const path = `users/${userId}/sessions`;
   try {
-    const sessionId = Math.random().toString(36).substring(7); // Or use auto ID
+    const sessionId = Math.random().toString(36).substring(7);
     const docRef = doc(db, path, sessionId);
     await setDoc(docRef, {
       ...session,
@@ -60,6 +79,6 @@ export async function saveSession(userId: string, session: Omit<InterviewSession
     });
     return sessionId;
   } catch (error) {
-    handleFirestoreError(error, OperationType.CREATE, path);
+    handleFirestoreError(error, OperationType.WRITE, path);
   }
 }
