@@ -1,6 +1,6 @@
-import React from "react";
-import { motion } from "motion/react";
-import { BarChart3, Clock, ArrowUpRight, TrendingUp, Sparkles, Plus, ChevronRight, User, Activity, Zap, Briefcase } from "lucide-react";
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { BarChart3, Clock, ArrowUpRight, TrendingUp, Sparkles, Plus, ChevronRight, User, Activity, Zap, Briefcase, CheckCircle2 } from "lucide-react";
 import { InterviewSession, UserProfile } from "../types";
 import { format } from "date-fns";
 
@@ -12,9 +12,16 @@ interface DashboardProps {
 }
 
 export function Dashboard({ history, onStartNew, profile, onOpenProfile }: DashboardProps) {
+  const [showToast, setShowToast] = useState(false);
   const avgScore = history.length > 0 
     ? Math.round(history.reduce((acc, s) => acc + s.overallScore, 0) / history.length) 
     : 0;
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  };
 
   return (
     <div className="max-w-7xl mx-auto py-16 px-4 md:px-12 relative">
@@ -172,9 +179,9 @@ export function Dashboard({ history, onStartNew, profile, onOpenProfile }: Dashb
             history.map((session, idx) => (
               <motion.div 
                 key={session.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: idx * 0.05 }}
+                initial={idx < 10 ? { opacity: 0, x: -20 } : false}
+                animate={idx < 10 ? { opacity: 1, x: 0 } : { opacity: 1, x: 0 }}
+                transition={{ delay: idx < 10 ? idx * 0.05 : 0 }}
                 className="p-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-10 hover:bg-white/[0.03] transition-all cursor-pointer group"
               >
                 <div className="flex items-center gap-10">
@@ -271,7 +278,8 @@ export function Dashboard({ history, onStartNew, profile, onOpenProfile }: Dashb
                <button 
                  onClick={() => {
                    navigator.clipboard.writeText(window.location.href);
-                   alert("Link Synchronized to Clipboard.");
+                   setShowToast(true);
+                  setTimeout(() => setShowToast(false), 3000);
                  }}
                  className="mt-10 w-full py-6 glass bg-emerald-600/10 border-emerald-500/30 text-emerald-400 rounded-2xl font-black text-xs uppercase tracking-[0.3em] hover:bg-emerald-600 hover:text-white transition-all shadow-xl active:scale-95"
                >
@@ -281,6 +289,20 @@ export function Dashboard({ history, onStartNew, profile, onOpenProfile }: Dashb
           </motion.div>
         ))}
       </div>
+
+      <AnimatePresence>
+        {showToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed bottom-12 left-1/2 -translate-x-1/2 glass px-10 py-5 rounded-2xl border-emerald-500/30 text-emerald-400 font-black text-[10px] uppercase tracking-[0.5em] flex items-center gap-4 shadow-2xl z-[100] glow-emerald italic"
+          >
+            <CheckCircle2 className="h-4 w-4" />
+            Link_Sync_Complete
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

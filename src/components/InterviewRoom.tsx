@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, memo, useCallback, useTransition } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Mic, MicOff, Video, VideoOff, Play, Square, Loader2, Sparkles, AlertCircle, ChevronRight, BarChart4, MessageSquare, Zap, Send, X } from "lucide-react";
 import { GeminiService } from "../services/gemini";
@@ -10,7 +10,7 @@ interface InterviewRoomProps {
   onComplete: (results: InterviewQuestion[]) => void;
 }
 
-const Chronometer = ({ isRecording, onWarning }: { isRecording: boolean; onWarning: (warn: boolean) => void }) => {
+const Chronometer = memo(({ isRecording, onWarning }: { isRecording: boolean; onWarning: (warn: boolean) => void }) => {
   const [time, setTime] = useState(0);
   
   useEffect(() => {
@@ -70,9 +70,9 @@ const Chronometer = ({ isRecording, onWarning }: { isRecording: boolean; onWarni
       )}
     </motion.div>
   );
-};
+});
 
-const GazeTracker = ({ isRecording, onUpdate }: { isRecording: boolean; onUpdate: (stats: any) => void }) => {
+const GazeTracker = memo(({ isRecording, onUpdate }: { isRecording: boolean; onUpdate: (stats: any) => void }) => {
   const [stats, setStats] = useState({
     direction: "Center",
     duration: 0,
@@ -111,7 +111,7 @@ const GazeTracker = ({ isRecording, onUpdate }: { isRecording: boolean; onUpdate
        <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">{stats.direction}</span>
     </div>
   );
-};
+});
 
 export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
   const [questions, setQuestions] = useState<InterviewQuestion[]>([]);
@@ -128,9 +128,14 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
   const [isMentorLoading, setIsMentorLoading] = useState(false);
   const [initPhase, setInitPhase] = useState<"peripherals" | "logic" | "ready">("peripherals");
   const [peripheralsStatus, setPeripheralsStatus] = useState({ video: false, audio: false });
+  const [isPending, startTransition] = useTransition();
 
   const [timerWarning, setTimerWarning] = useState(false);
   const [eyeStats, setEyeStats] = useState({ direction: "Center", duration: 0, isMaintaining: true });
+
+  const handleTimerWarning = useCallback((warn: boolean) => setTimerWarning(warn), []);
+  const handleEyeUpdate = useCallback((stats: any) => setEyeStats(stats), []);
+
   const [speechSupported, setSpeechSupported] = useState(true);
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [smartHint, setSmartHint] = useState<string | null>(null);
@@ -143,6 +148,7 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
   const startTimeRef = useRef<number>(0);
   const isRecordingRef = useRef(false);
   const transcriptRef = useRef("");
+  const lastTranscriptUpdateRef = useRef(0);
 
   useEffect(() => {
     const runSetup = async () => {
@@ -228,7 +234,16 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
           if (event.results[i].isFinal) {
             const newText = event.results[i][0].transcript;
             transcriptRef.current += newText + " ";
-            setTranscript(transcriptRef.current);
+            
+            // Throttle state updates for transcript to improve INP
+            const now = Date.now();
+            if (now - lastTranscriptUpdateRef.current > 100) {
+              startTransition(() => {
+                setTranscript(transcriptRef.current);
+              });
+              lastTranscriptUpdateRef.current = now;
+            }
+            
             setSmartHint(null); // Clear hint on activity
           } else {
             interimTranscript += event.results[i][0].transcript;
@@ -506,7 +521,7 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
         {/* Video Feedback Area */}
         <div className="relative aspect-video glass rounded-[3rem] overflow-hidden shadow-2xl group">
           {!useVideo ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/40 backdrop-blur-3xl">
+            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/40 backdrop-blur-xl">
               <VideoOff className="h-20 w-20 text-slate-700" />
             </div>
           ) : (
@@ -542,7 +557,7 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
               )}
             </div>
 
-            <Chronometer isRecording={isRecording} onWarning={setTimerWarning} />
+            <Chronometer isRecording={isRecording} onWarning={handleTimerWarning} />
             
             <AnimatePresence>
               {smartHint && (
@@ -564,7 +579,7 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
           </div>
 
           <div className="absolute top-8 right-8 flex items-center gap-3 glass p-4 rounded-[2rem] border-white/10">
-            <GazeTracker isRecording={isRecording} onUpdate={setEyeStats} />
+            <GazeTracker isRecording={isRecording} onUpdate={handleEyeUpdate} />
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <motion.div
                 key={i}
@@ -663,7 +678,7 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
         </AnimatePresence>
 
         {/* Question Area */}
-        <div className="glass rounded-[3rem] p-12 backdrop-blur-3xl relative overflow-hidden shadow-2xl border-white/5">
+        <div className="glass rounded-[3rem] p-12 backdrop-blur-xl relative overflow-hidden shadow-2xl border-white/5">
           <div className="absolute top-0 left-0 w-2 h-full bg-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.5)]" />
           <div className="flex justify-between items-start mb-10">
              <div className="px-6 py-2 bg-indigo-500/10 rounded-full text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] border border-indigo-500/20 glow-indigo">
@@ -790,7 +805,7 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
-              className="fixed top-0 right-0 bottom-0 w-full max-w-xl glass border-l border-white/5 z-[80] shadow-2xl flex flex-col backdrop-blur-3xl"
+              className="fixed top-0 right-0 bottom-0 w-full max-w-xl glass border-l border-white/5 z-[80] shadow-2xl flex flex-col backdrop-blur-xl"
             >
               <div className="p-10 border-b border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-5">

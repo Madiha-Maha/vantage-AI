@@ -88,7 +88,7 @@ export function Profile({ profile, onSave, onClose }: ProfileProps) {
         animate={{ scale: 1, y: 0, opacity: 1 }}
         exit={{ scale: 0.9, y: 30, opacity: 0 }}
         transition={{ type: "spring", damping: 25, stiffness: 200 }}
-        className="glass border border-white/5 w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-[4rem] shadow-[0_0_100px_rgba(0,0,0,0.8)] flex flex-col relative backdrop-blur-3xl"
+        className="glass border border-white/5 w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-[4rem] shadow-[0_0_100px_rgba(0,0,0,0.8)] flex flex-col relative backdrop-blur-xl"
       >
         {/* Animated background grid */}
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none" />
