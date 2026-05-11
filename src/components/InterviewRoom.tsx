@@ -37,33 +37,33 @@ const Chronometer = ({ isRecording, onWarning }: { isRecording: boolean; onWarni
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       className={cn(
-        "flex items-center gap-3 px-4 py-2 rounded-2xl backdrop-blur-xl border transition-colors",
-        time > 120 ? "bg-rose-500/20 border-rose-500/30 text-rose-400" : "bg-slate-950/60 border-white/10 text-white"
+        "flex items-center gap-4 px-6 py-3 rounded-2xl glass transition-all shadow-2xl",
+        time > 120 ? "bg-rose-500/10 border-rose-500/30 text-rose-400 glow-rose" : "bg-slate-950/40 border-white/10 text-white"
       )}
     >
-      <div className="relative h-4 w-4">
+      <div className="relative h-5 w-5">
         <svg className="h-full w-full transform -rotate-90">
           <circle
-            cx="8"
-            cy="8"
-            r="7"
+            cx="10"
+            cy="10"
+            r="9"
             stroke="currentColor"
             strokeWidth="2"
             fill="transparent"
-            strokeDasharray={44}
-            strokeDashoffset={44 - (Math.min(time, 180) / 180) * 44}
+            strokeDasharray={56}
+            strokeDashoffset={56 - (Math.min(time, 180) / 180) * 56}
             className="opacity-40"
           />
         </svg>
       </div>
-      <span className="text-xs font-bold font-mono tracking-tighter">
+      <span className="text-sm font-black font-mono tracking-tighter">
         {Math.floor(time / 60)}:{String(time % 60).padStart(2, '0')}
       </span>
       {time > 120 && (
         <motion.span 
-          animate={{ opacity: [1, 0.2, 1], scale: [1, 1.1, 1] }}
-          transition={{ repeat: Infinity, duration: 0.8, ease: "easeInOut" }}
-          className="text-xs font-black uppercase tracking-widest text-rose-300"
+          animate={{ opacity: [1, 0.4, 1] }}
+          transition={{ repeat: Infinity, duration: 1.5 }}
+          className="text-[9px] font-black uppercase tracking-[0.2em] text-rose-300"
         >
           Conciseness Warning
         </motion.span>
@@ -106,9 +106,9 @@ const GazeTracker = ({ isRecording, onUpdate }: { isRecording: boolean; onUpdate
   }, [isRecording, onUpdate]);
 
   return (
-    <div className="flex items-center gap-1.5 mr-3 border-r border-white/10 pr-3">
-       <div className={cn("h-2 w-2 rounded-full", isRecording ? "bg-emerald-500 animate-pulse" : "bg-slate-500")} />
-       <span className="text-[10px] font-bold text-white uppercase tracking-widest">{stats.direction}</span>
+    <div className="flex items-center gap-3 mr-4 border-r border-white/5 pr-4">
+       <div className={cn("h-2 w-2 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]", isRecording ? "bg-emerald-500 animate-pulse" : "bg-slate-700")} />
+       <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">{stats.direction}</span>
     </div>
   );
 };
@@ -272,26 +272,31 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
 
   const analyseAnswer = async (duration: number) => {
     setIsAnalysing(true);
-    const currentQuestion = questions[currentIdx] || { text: "Session error", id: "error" };
-    
-    // Simulate some transcript if Web Speech API failed or was short
-    const finalTranscript = transcript || "I would approach this problem by first analyzing the requirements and then designing a scalable solution using modern tools like React and TypeScript. Confidence is key in such situations.";
+    try {
+      const currentQuestion = questions[currentIdx] || { text: "Session error", id: "error" };
+      
+      // Simulate some transcript if Web Speech API failed or was short
+      const finalTranscript = transcript || "I would approach this problem by first analyzing the requirements and then designing a scalable solution using modern tools like React and TypeScript. Confidence is key in such situations.";
 
-    const analysis = await GeminiService.analyzeAnswer(
-      currentQuestion.text,
-      finalTranscript,
-      duration,
-      config.role
-    );
+      const analysis = await GeminiService.analyzeAnswer(
+        currentQuestion.text,
+        finalTranscript,
+        duration,
+        config.role
+      );
 
-    const updatedQuestions = [...questions];
-    updatedQuestions[currentIdx] = {
-      ...currentQuestion,
-      transcript: finalTranscript,
-      analysis: analysis,
-    };
-    setQuestions(updatedQuestions);
-    setIsAnalysing(false);
+      const updatedQuestions = [...questions];
+      updatedQuestions[currentIdx] = {
+        ...currentQuestion,
+        transcript: finalTranscript,
+        analysis: analysis,
+      };
+      setQuestions(updatedQuestions);
+    } catch (error) {
+      console.error("Analysis failed:", error);
+    } finally {
+      setIsAnalysing(false);
+    }
   };
 
   const nextQuestion = () => {
@@ -351,10 +356,16 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
 
   if (isInitializing) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] w-full max-w-4xl mx-auto px-8">
-        <div className="relative w-full aspect-video bg-slate-900 rounded-[3rem] overflow-hidden border border-slate-800 shadow-[0_0_100px_rgba(0,0,0,0.5)] flex items-center justify-center">
+      <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-5xl mx-auto px-8 relative">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.05),transparent)] pointer-events-none" />
+        
+        <div className="relative w-full aspect-video glass rounded-[4rem] overflow-hidden shadow-[0_0_100px_-20px_rgba(0,0,0,0.5)] flex items-center justify-center group">
           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none" />
           
+          {/* Decorative Corners */}
+          <div className="absolute top-12 left-12 w-12 h-12 border-t-2 border-l-2 border-white/10 group-hover:border-indigo-500/50 transition-colors" />
+          <div className="absolute bottom-12 right-12 w-12 h-12 border-b-2 border-r-2 border-white/10 group-hover:border-indigo-500/50 transition-colors" />
+
           <AnimatePresence mode="wait">
             {initPhase === "peripherals" && (
               <motion.div 
@@ -362,25 +373,24 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 1.1 }}
-                className="flex flex-col items-center gap-8"
+                className="flex flex-col items-center gap-12"
               >
-                <div className="flex gap-4">
-                   <div className={cn(
-                     "p-6 rounded-3xl border transition-all duration-700",
-                     peripheralsStatus.video ? "bg-emerald-500/10 border-emerald-500 text-emerald-400" : "bg-slate-800 border-slate-700 text-slate-500"
-                   )}>
-                      <Video className="h-8 w-8" />
-                   </div>
-                   <div className={cn(
-                     "p-6 rounded-3xl border transition-all duration-700",
-                     peripheralsStatus.audio ? "bg-emerald-500/10 border-emerald-500 text-emerald-400" : "bg-slate-800 border-slate-700 text-slate-500"
-                   )}>
-                      <Mic className="h-8 w-8" />
-                   </div>
+                <div className="flex gap-8">
+                   {[
+                     { icon: Video, active: peripheralsStatus.video, label: "CAM_ACTIVE" },
+                     { icon: Mic, active: peripheralsStatus.audio, label: "MIC_ACTIVE" }
+                   ].map((p, i) => (
+                     <div key={i} className={cn(
+                       "p-10 rounded-[2.5rem] border transition-all duration-1000 glass",
+                       p.active ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 glow-emerald" : "bg-slate-800/10 border-white/5 text-slate-700"
+                     )}>
+                        <p.icon className="h-10 w-10" />
+                     </div>
+                   ))}
                 </div>
-                <div className="text-center space-y-2">
-                   <h3 className="text-xl font-bold text-white tracking-widest uppercase">Peripherals Link</h3>
-                   <p className="text-slate-500 text-xs font-bold tracking-[0.2em] uppercase">Checking Virtual Streams...</p>
+                <div className="text-center space-y-4">
+                   <h3 className="text-3xl font-black text-white tracking-widest uppercase italic leading-none">PERIPHERAL_SYNC</h3>
+                   <p className="text-slate-500 text-[10px] font-bold tracking-[0.4em] uppercase">Validating Input Streams...</p>
                 </div>
               </motion.div>
             )}
@@ -388,33 +398,33 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
             {initPhase === "logic" && (
               <motion.div 
                 key="logic"
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="flex flex-col items-center gap-10 w-full max-w-xs"
+                exit={{ opacity: 0, y: -30 }}
+                className="flex flex-col items-center gap-12 w-full max-w-md"
               >
-                <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                <div className="w-full h-2 bg-slate-950/50 rounded-full overflow-hidden border border-white/5 shadow-inner">
                    <motion.div 
                      initial={{ width: 0 }}
                      animate={{ width: "100%" }}
-                     transition={{ duration: 1.5, ease: "easeInOut" }}
-                     className="h-full bg-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.5)]"
+                     transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+                     className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 shadow-[0_0_20px_rgba(99,102,241,0.5)]"
                    />
                 </div>
-                <div className="text-center space-y-3">
-                   <div className="flex justify-center gap-1">
-                      {[1,2,3].map(i => (
+                <div className="text-center space-y-6">
+                   <div className="flex justify-center gap-2">
+                      {[1,2,3,4].map(i => (
                         <motion.div 
                           key={i}
-                          animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }}
-                          transition={{ repeat: Infinity, duration: 1, delay: i * 0.2 }}
-                          className="h-1.5 w-1.5 rounded-full bg-indigo-400" 
+                          animate={{ scale: [1, 1.5, 1], opacity: [0.2, 1, 0.2] }}
+                          transition={{ repeat: Infinity, duration: 1, delay: i * 0.1 }}
+                          className="h-2 w-2 rounded-full bg-indigo-500" 
                         />
                       ))}
                    </div>
-                   <h3 className="text-lg font-bold text-white tracking-[0.3em] uppercase">Tailoring Environment</h3>
-                   <p className="text-slate-500 text-[10px] font-bold tracking-[0.2em] uppercase leading-relaxed">
-                      Compiling tailored assessment architect for <br/>
+                   <h3 className="text-3xl font-black text-white tracking-widest uppercase italic leading-none">BUILDING_ASSESSMENT</h3>
+                   <p className="text-slate-500 text-[11px] font-black tracking-[0.4em] uppercase leading-relaxed">
+                      Customizing logic gates for <br/>
                       <span className="text-indigo-400">"{config.role}"</span>
                    </p>
                 </div>
@@ -424,21 +434,24 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
             {initPhase === "ready" && (
               <motion.div 
                 key="ready"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex flex-col items-center gap-4"
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex flex-col items-center gap-8"
               >
-                <div className="h-20 w-20 rounded-full border-2 border-emerald-500/30 flex items-center justify-center p-2">
+                <div className="h-32 w-32 rounded-full border-2 border-emerald-500/20 flex items-center justify-center p-4">
                    <motion.div 
-                     initial={{ scale: 0 }}
-                     animate={{ scale: 1 }}
-                     className="h-full w-full rounded-full bg-emerald-500 flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.5)]"
+                     animate={{ 
+                       scale: [1, 1.1, 1],
+                       boxShadow: ["0 0 20px rgba(16,185,129,0.3)", "0 0 50px rgba(16,185,129,0.6)", "0 0 20px rgba(16,185,129,0.3)"]
+                     }}
+                     transition={{ duration: 2, repeat: Infinity }}
+                     className="h-full w-full rounded-full bg-emerald-500 flex items-center justify-center"
                    >
-                      <Zap className="h-8 w-8 text-white" fill="currentColor" />
+                      <Zap className="h-12 w-12 text-white" fill="currentColor" />
                    </motion.div>
                 </div>
                 <div className="text-center">
-                   <div className="text-emerald-400 text-sm font-bold tracking-[0.4em] uppercase">Connection Established</div>
+                   <div className="text-emerald-400 text-lg font-black tracking-[0.5em] uppercase italic">STREAM_READY</div>
                 </div>
               </motion.div>
             )}
@@ -447,41 +460,38 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
         
         {mediaError && (
           <motion.div 
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-6 p-6 rounded-3xl bg-rose-500/10 border border-rose-500/20 flex flex-col gap-4 text-rose-400 text-xs font-medium max-w-sm"
+            className="mt-10 p-8 glass rounded-[2.5rem] bg-rose-500/10 border-rose-500/20 flex flex-col gap-6 text-rose-400 max-w-lg shadow-2xl glow-rose"
           >
-            <div className="flex items-center gap-3">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              <span>{mediaError}</span>
+            <div className="flex items-start gap-6">
+              <AlertCircle className="h-6 w-6 shrink-0 mt-1" />
+              <div className="space-y-1">
+                 <div className="font-black uppercase tracking-widest text-[10px]">Access_Failure</div>
+                 <div className="text-sm font-bold opacity-80 leading-relaxed">{mediaError}</div>
+              </div>
             </div>
             <button 
               onClick={() => { setMediaError(null); initMedia(); }}
-              className="w-full py-3 bg-rose-500 text-white rounded-xl font-bold hover:bg-rose-600 transition-colors"
+              className="w-full py-5 bg-rose-500 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-rose-600 transition-all shadow-xl active:scale-95"
             >
-              Retry Connection
+              Retry Handshake
             </button>
           </motion.div>
         )}
 
-        {questions.length === 0 && !isInitializing && (
-           <div className="mt-8 text-center text-slate-500 text-xs font-bold uppercase tracking-widest">
-             Waiting for assessment data...
-           </div>
-        )}
-
-        <div className="mt-12 w-full flex items-center justify-between border-t border-slate-800/50 pt-8">
-           <div className="flex gap-12">
-              <div className="space-y-1">
-                 <div className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">System Health</div>
-                 <div className="text-xs text-slate-400 font-bold">Optimal</div>
+        <div className="mt-16 w-full flex items-center justify-between border-t border-white/5 pt-12">
+           <div className="flex gap-16">
+              <div className="space-y-2">
+                 <div className="text-[10px] text-slate-600 font-bold uppercase tracking-[0.3em]">System Health</div>
+                 <div className="text-xs text-white font-black tracking-widest uppercase">Optimal_Pulse</div>
               </div>
-              <div className="space-y-1">
-                 <div className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Protocol</div>
-                 <div className="text-xs text-slate-400 font-bold">Secure V4</div>
+              <div className="space-y-2">
+                 <div className="text-[10px] text-slate-600 font-bold uppercase tracking-[0.3em]">Deployment</div>
+                 <div className="text-xs text-white font-black tracking-widest uppercase">Secure_V4</div>
               </div>
            </div>
-           <div className="text-[9px] text-slate-700 font-bold uppercase tracking-[0.3em]">Professional Suite</div>
+           <div className="text-[10px] text-slate-600 font-black uppercase tracking-[0.5em]">Cognitive Suite</div>
         </div>
       </div>
     );
@@ -494,10 +504,10 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto py-8 px-4">
       <div className="lg:col-span-2 space-y-6">
         {/* Video Feedback Area */}
-        <div className="relative aspect-video bg-slate-900 rounded-3xl overflow-hidden border border-slate-800 shadow-2xl">
+        <div className="relative aspect-video glass rounded-[3rem] overflow-hidden shadow-2xl group">
           {!useVideo ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-slate-800">
-              <VideoOff className="h-16 w-16 text-slate-700" />
+            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/40 backdrop-blur-3xl">
+              <VideoOff className="h-20 w-20 text-slate-700" />
             </div>
           ) : (
             <video
@@ -510,24 +520,24 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
           )}
 
           {/* Cyber Framing */}
-          <div className="absolute inset-x-10 inset-y-10 border border-white/5 pointer-events-none">
-            <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-indigo-500/30" />
-            <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-white/10" />
-            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-white/10" />
-            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-white/10" />
+          <div className="absolute inset-x-8 inset-y-8 border border-white/5 pointer-events-none group-hover:border-white/10 transition-colors">
+            <div className="absolute top-0 left-0 w-12 h-12 border-t-2 border-l-2 border-indigo-500/30" />
+            <div className="absolute top-0 right-0 w-12 h-12 border-t-2 border-r-2 border-white/10" />
+            <div className="absolute bottom-0 left-0 w-12 h-12 border-b-2 border-l-2 border-white/10" />
+            <div className="absolute bottom-0 right-0 w-12 h-12 border-b-2 border-r-2 border-white/10" />
           </div>
 
           {/* Overlay UI */}
-          <div className="absolute top-6 left-6 flex flex-col gap-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-slate-950/80 backdrop-blur-xl px-4 py-2 rounded-xl text-[10px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-3 border border-white/10 shadow-2xl">
-                <div className={cn("h-1.5 w-1.5 rounded-full", isRecording ? "bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.8)]" : "bg-slate-500")} />
-                {isRecording ? "Neural Capture: Active" : "Status: Ready"}
+          <div className="absolute top-8 left-8 flex flex-col gap-5">
+            <div className="flex items-center gap-4">
+              <div className="glass px-6 py-3 rounded-2xl text-[10px] font-black text-white uppercase tracking-[0.3em] flex items-center gap-3 shadow-2xl border-white/10">
+                <div className={cn("h-1.5 w-1.5 rounded-full", isRecording ? "bg-rose-500 animate-pulse glow-rose" : "bg-slate-500")} />
+                {isRecording ? "AI_CAPTURE: ACTIVE" : "STATUS: READY"}
               </div>
               {isAnalysing && (
-                <div className="bg-indigo-500/20 backdrop-blur-md px-4 py-2 rounded-xl text-[10px] font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-3 border border-indigo-500/30">
+                <div className="bg-indigo-500/10 backdrop-blur-md px-6 py-3 rounded-2xl text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] flex items-center gap-3 border border-indigo-500/20 glow-indigo">
                   <Loader2 className="h-3 w-3 animate-spin" />
-                  Processing
+                  ANALYSING
                 </div>
               )}
             </div>
@@ -540,11 +550,11 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  className="bg-indigo-600 border border-indigo-400 p-4 rounded-2xl shadow-xl max-w-xs"
+                  className="bg-indigo-600/90 backdrop-blur-xl border border-white/20 p-6 rounded-[2rem] shadow-[0_20px_50px_rgba(79,70,229,0.3)] max-w-sm"
                 >
-                  <div className="flex items-start gap-3">
-                     <Sparkles className="h-4 w-4 text-white shrink-0 mt-0.5" />
-                     <p className="text-white text-xs font-medium leading-relaxed italic">
+                  <div className="flex items-start gap-4">
+                     <Sparkles className="h-5 w-5 text-indigo-200 shrink-0 mt-0.5" />
+                     <p className="text-white text-xs font-bold leading-relaxed italic uppercase tracking-wider">
                        {smartHint}
                      </p>
                   </div>
@@ -553,27 +563,27 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
             </AnimatePresence>
           </div>
 
-          <div className="absolute top-6 right-6 flex items-center gap-1.5 backdrop-blur-md bg-slate-950/40 p-3 rounded-2xl border border-white/10">
+          <div className="absolute top-8 right-8 flex items-center gap-3 glass p-4 rounded-[2rem] border-white/10">
             <GazeTracker isRecording={isRecording} onUpdate={setEyeStats} />
-            {[1, 2, 3, 4, 5].map((i) => (
+            {[1, 2, 3, 4, 5, 6].map((i) => (
               <motion.div
                 key={i}
                 animate={{ 
-                  height: isRecording ? [4, 12, 6, 16, 4] : 4,
+                  height: isRecording ? [6, 18, 8, 24, 6] : 6,
                   opacity: isRecording ? 1 : 0.2
                 }}
                 transition={{ 
-                  duration: 0.6, 
+                  duration: 0.8, 
                   repeat: Infinity, 
                   delay: i * 0.1,
                   ease: "easeInOut"
                 }}
-                className="w-1 bg-indigo-500/60 rounded-full"
+                className="w-1.5 bg-indigo-500/40 rounded-full"
               />
             ))}
           </div>
 
-          {/* Neural Vision Gaze Markers */}
+          {/* AI Vision Gaze Markers */}
           <AnimatePresence>
             {isRecording && eyeStats.direction === "Center" && (
               <motion.div 
@@ -583,67 +593,67 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
                 className="absolute left-1/2 top-1/3 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
               >
                 <div className="relative">
-                  <div className="h-24 w-24 border-2 border-indigo-500/20 rounded-full animate-ping" />
+                  <div className="h-32 w-32 border-2 border-white/5 rounded-full animate-ping" />
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="h-3 w-3 bg-indigo-500 rounded-full shadow-[0_0_15px_rgba(99,102,241,0.8)]" />
+                    <div className="h-4 w-4 bg-indigo-500 rounded-full glow-indigo" />
                   </div>
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-[10px] font-bold text-indigo-400 uppercase tracking-[0.2em] whitespace-nowrap">
-                    Neural Focus Locked
+                  <div className="absolute -top-12 left-1/2 -translate-x-1/2 text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em] whitespace-nowrap italic">
+                    AI_FOCUS_LOCKED
                   </div>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
 
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-slate-950/40 backdrop-blur-xl border border-white/10 p-3 rounded-2xl shadow-2xl">
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-6 glass p-4 rounded-[2.5rem] shadow-2xl border-white/10">
             <button
               onClick={() => setUseAudio(!useAudio)}
-              className={cn("p-4 rounded-xl transition-all border", useAudio ? "bg-slate-800 border-slate-700 text-white" : "bg-rose-500/10 border-rose-500/30 text-rose-400")}
+              className={cn("p-5 rounded-2xl transition-all border", useAudio ? "bg-white/5 border-white/10 text-white hover:bg-white/10" : "bg-rose-500/10 border-rose-500/30 text-rose-400")}
             >
-              {useAudio ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
+              {useAudio ? <Mic className="h-6 w-6" /> : <MicOff className="h-6 w-6" />}
             </button>
             
             <button
               onClick={isRecording ? stopRecording : startRecording}
               disabled={isAnalysing}
               className={cn(
-                "p-6 rounded-2xl transition-all flex items-center justify-center shadow-2xl transform active:scale-90",
-                isRecording ? "bg-rose-600 hover:bg-rose-500 shadow-rose-500/20" : "bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/20"
+                "p-8 rounded-[2rem] transition-all flex items-center justify-center shadow-2xl transform active:scale-95 group",
+                isRecording ? "bg-rose-600 hover:bg-rose-500 glow-rose" : "bg-indigo-600 hover:bg-indigo-500 glow-indigo"
               )}
             >
-              {isRecording ? <Square className="h-6 w-6 text-white" /> : <Play className="h-6 w-6 text-white" fill="currentColor" />}
+              {isRecording ? <Square className="h-8 w-8 text-white" /> : <Play className="h-8 w-8 text-white group-hover:scale-110 transition-transform" fill="currentColor" />}
             </button>
 
             <button
               onClick={() => setUseVideo(!useVideo)}
-              className={cn("p-4 rounded-xl transition-all border", useVideo ? "bg-slate-800 border-slate-700 text-white" : "bg-rose-500/10 border-rose-500/30 text-rose-400")}
+              className={cn("p-5 rounded-2xl transition-all border", useVideo ? "bg-white/5 border-white/10 text-white hover:bg-white/10" : "bg-rose-500/10 border-rose-500/30 text-rose-400")}
             >
-              {useVideo ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
+              {useVideo ? <Video className="h-6 w-6" /> : <VideoOff className="h-6 w-6" />}
             </button>
           </div>
         </div>
 
-        {/* Real-time Transcription Bar - WOW FEATURE */}
+        {/* Real-time Transcription Bar */}
         <AnimatePresence>
           {isRecording && (
             <motion.div 
-              initial={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 relative overflow-hidden flex items-center gap-6"
+              exit={{ opacity: 0, y: -20 }}
+              className="glass rounded-3xl p-8 relative overflow-hidden flex items-center gap-8 shadow-2xl border-white/10"
             >
               <div className="flex-shrink-0 flex flex-col items-center">
-                 <div className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest mb-2">Live Text</div>
-                 <div className="h-8 w-px bg-slate-800" />
+                 <div className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-3 leading-none">LIVE_STREAM</div>
+                 <div className="h-10 w-[2px] bg-white/5" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-slate-300 leading-relaxed italic">
-                  {speechSupported ? (transcript || "Waiting for audio signal...") : "Speech recognition is not supported in this browser. Please use Chrome or Edge for the full experience."}
+                <p className="text-base font-bold text-slate-300 leading-relaxed italic uppercase tracking-wider">
+                  {speechSupported ? (transcript || "Waiting for audio signal...") : "Speech recognition is not supported in this browser."}
                   {speechSupported && (
                     <motion.span 
                       animate={{ opacity: [1, 0] }}
                       transition={{ repeat: Infinity, duration: 0.8 }}
-                      className="inline-block w-1 h-4 bg-indigo-500 ml-1 translate-y-0.5"
+                      className="inline-block w-1.5 h-5 bg-indigo-500 ml-2 translate-y-1"
                     />
                   )}
                 </p>
@@ -653,88 +663,95 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
         </AnimatePresence>
 
         {/* Question Area */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-10 backdrop-blur-md relative overflow-hidden shadow-xl">
-          <div className="absolute top-0 left-0 w-1.5 h-full bg-indigo-500" />
-          <div className="flex justify-between items-start mb-6">
-             <div className="px-4 py-1 bg-indigo-500/10 rounded-full text-[10px] font-bold text-indigo-400 uppercase tracking-widest border border-indigo-500/20">
-                Segment {currentIdx + 1} / {questions.length}
+        <div className="glass rounded-[3rem] p-12 backdrop-blur-3xl relative overflow-hidden shadow-2xl border-white/5">
+          <div className="absolute top-0 left-0 w-2 h-full bg-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.5)]" />
+          <div className="flex justify-between items-start mb-10">
+             <div className="px-6 py-2 bg-indigo-500/10 rounded-full text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] border border-indigo-500/20 glow-indigo">
+                SEGMENT_ID: {currentIdx + 1} // {questions.length}
              </div>
-             <div className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">{config.difficulty} Assessment</div>
+             <div className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] italic">{config.difficulty}: LEVEL_CORE</div>
           </div>
-          <h3 className="text-2xl font-bold text-white mb-8 leading-relaxed tracking-tight italic font-light">
+          <h3 className="text-4xl font-black text-white mb-12 leading-[1.1] tracking-tighter italic uppercase">
             "{currentQuestion?.text}"
           </h3>
           
-          <div className="flex items-start gap-5 p-6 rounded-2xl bg-slate-950/40 border border-slate-800">
-            <AlertCircle className="h-5 w-5 text-indigo-400 mt-1 flex-shrink-0" />
-            <div className="text-sm text-slate-400 leading-relaxed">
-              "Focus on articulating your value proposition. Our systems are screening for <span className="text-white font-semibold">{config.role}</span> terminology and structural clarity."
+          <div className="flex items-start gap-8 p-8 rounded-[2.5rem] bg-white/[0.02] border border-white/5 shadow-inner">
+            <div className="p-3 bg-indigo-500/10 rounded-2xl border border-indigo-500/20">
+              <Sparkles className="h-6 w-6 text-indigo-400" />
+            </div>
+            <div className="text-sm text-slate-400 font-bold leading-relaxed uppercase tracking-widest">
+              "Focus on articulating your value proposition. AI systems are screening for <span className="text-white glow-indigo">{config.role}</span> terminology and structural clarity."
             </div>
           </div>
         </div>
       </div>
 
-      {/* Analysis Sidebar (Real-time simplified stats) */}
-      <div className="space-y-6 relative">
-        {/* Mentor Floating Button */}
+      {/* Sidebar (Assessment Tracking) */}
+      <div className="space-y-8 relative">
         <button
           onClick={() => setIsMentorOpen(true)}
-          className="w-full p-6 bg-indigo-600 rounded-[2rem] text-white flex items-center justify-between group hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20"
+          className="w-full p-8 bg-indigo-600 rounded-[3rem] text-white flex items-center justify-between group hover:bg-indigo-500 transition-all shadow-[0_20px_40px_-10px_rgba(79,70,229,0.4)] glow-indigo"
         >
-          <div className="flex items-center gap-4">
-            <div className="p-2 rounded-xl bg-white/20">
-              <Zap className="h-5 w-5 text-white" fill="currentColor" />
+          <div className="flex items-center gap-6">
+            <div className="p-3 rounded-2xl bg-white/20">
+              <Zap className="h-6 w-6 text-white" fill="currentColor" />
             </div>
             <div className="text-left">
-              <div className="text-[10px] font-bold uppercase tracking-widest opacity-70">Neural Mentor</div>
-              <div className="text-sm font-bold">Ask for Guidance</div>
+              <div className="text-[10px] font-black uppercase tracking-[0.4em] opacity-70 mb-1 leading-none">CORE_MENTOR</div>
+              <div className="text-lg font-black uppercase italic italic">Request Guidance</div>
             </div>
           </div>
-          <ChevronRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+          <ChevronRight className="h-6 w-6 group-hover:translate-x-2 transition-transform" />
         </button>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-xl">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
-               <Zap className="h-5 w-5 text-indigo-400" fill="currentColor" />
+        <div className="glass rounded-[3rem] p-10 shadow-2xl border-white/5">
+          <div className="flex items-center gap-4 mb-10">
+            <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
+               <BarChart4 className="h-6 w-6 text-indigo-400" />
             </div>
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">Neural Response Tracking</span>
+            <div className="text-left">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] block leading-none mb-1">CORE_METRICS</span>
+              <span className="text-xs font-black text-white uppercase italic">Active_Telemetry</span>
+            </div>
           </div>
           
-          <div className="space-y-8">
+          <div className="space-y-10">
             <div>
-              <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase mb-3 tracking-widest">
-                 <span>Gaze Centrality</span>
-                 <span className={cn(eyeStats.isMaintaining ? "text-emerald-400" : "text-amber-400")}>
+              <div className="flex justify-between text-[10px] font-black text-slate-500 uppercase mb-4 tracking-[0.3em]">
+                 <span>Presence_Lock</span>
+                 <span className={cn("glow-indigo", eyeStats.isMaintaining ? "text-emerald-400" : "text-amber-400")}>
                     {isRecording ? Math.round((eyeStats.duration / (Math.max(1, (Date.now() - startTimeRef.current) / 1000))) * 100) : (currentQuestion.analysis?.eyeContactScore || 0)}%
                  </span>
               </div>
-              <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+              <div className="h-3 w-full bg-slate-950/50 rounded-full overflow-hidden border border-white/5 shadow-inner">
                 <motion.div 
-                  className="h-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]"
+                  className="h-full bg-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.5)]"
                   animate={{ width: `${isRecording ? Math.round((eyeStats.duration / (Math.max(1, (Date.now() - startTimeRef.current) / 1000))) * 100) : (currentQuestion.analysis?.eyeContactScore || 0)}%` }}
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 shadow-inner">
-                <div className="text-[10px] font-bold text-slate-600 uppercase mb-1">Focal Node</div>
-                <div className="text-sm font-bold text-white uppercase tracking-widest">{isRecording ? eyeStats.direction : "Resting"}</div>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="p-6 rounded-3xl bg-white/[0.02] border border-white/5 shadow-inner space-y-1">
+                <div className="text-[9px] font-black text-slate-600 uppercase tracking-[0.3em]">FOCAL_DIR</div>
+                <div className="text-sm font-black text-white uppercase italic tracking-widest">{isRecording ? eyeStats.direction : "Resting"}</div>
               </div>
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 shadow-inner">
-                <div className="text-[10px] font-bold text-slate-600 uppercase mb-1">Lock Duration</div>
-                <div className="text-sm font-bold text-white tabular-nums tracking-tighter">{eyeStats.duration}s</div>
+              <div className="p-6 rounded-3xl bg-white/[0.02] border border-white/5 shadow-inner space-y-1">
+                <div className="text-[9px] font-black text-slate-600 uppercase tracking-[0.3em]">LOCK_DUR</div>
+                <div className="text-sm font-black text-white tabular-nums tracking-tighter">{eyeStats.duration}s</div>
               </div>
             </div>
 
-            <div className="p-6 rounded-2xl bg-indigo-500/5 border border-indigo-500/10">
-               <div className="flex items-center gap-2 mb-3">
-                 <div className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
-                 <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest">Neural Tip</span>
+            <div className="p-8 rounded-[2.5rem] bg-indigo-500/5 border border-indigo-500/10 relative overflow-hidden">
+               <div className="absolute top-0 right-0 p-4 opacity-5">
+                 <Sparkles className="h-16 w-16 text-indigo-400" />
                </div>
-               <p className="text-[11px] text-slate-400 leading-relaxed font-bold">
-                 Maximize gaze duration on the lens to reinforce executive presence and semantic connection.
+               <div className="flex items-center gap-3 mb-4">
+                 <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse glow-indigo" />
+                 <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em]">SYSTEM_TIP</span>
+               </div>
+               <p className="text-[11px] text-slate-400 leading-relaxed font-black uppercase tracking-wider italic">
+                 Maximize gaze stability to reinforce semantic connection and leadership presence.
                </p>
             </div>
           </div>
@@ -743,22 +760,22 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
         <button
           onClick={nextQuestion}
           disabled={isRecording || isAnalysing || (!currentQuestion.analysis && currentIdx !== -1)}
-          className="w-full flex items-center justify-between p-8 bg-slate-900 border border-slate-800 rounded-3xl hover:bg-slate-800/80 transition-all group disabled:opacity-50 disabled:cursor-not-allowed shadow-xl"
+          className="w-full flex items-center justify-between p-10 bg-slate-900 border border-white/5 rounded-[3rem] hover:bg-white/[0.05] transition-all group disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl glass"
         >
           <div className="text-left">
-             <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Session Flux</div>
-             <div className="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors">
-               {currentIdx === questions.length - 1 ? "Finalize Assessment" : "Next Segment"}
+             <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-2 leading-none">SESSION_LOGIC</div>
+             <div className="text-lg font-black text-white uppercase italic group-hover:text-indigo-400 transition-colors">
+               {currentIdx === questions.length - 1 ? "Finalize Core" : "Next Segment"}
              </div>
           </div>
-          <div className="p-2 rounded-full border border-slate-700 bg-slate-950 group-hover:border-indigo-500/50 transition-colors">
-            <ChevronRight className="h-5 w-5 text-slate-500 group-hover:text-indigo-400" />
+          <div className="p-4 rounded-full border border-white/10 bg-white/5 group-hover:border-indigo-500/50 group-hover:glow-indigo transition-all">
+            <ChevronRight className="h-6 w-6 text-slate-500 group-hover:text-white" />
           </div>
         </button>
       </div>
       </div>
 
-      {/* Neural Mentor Drawer */}
+      {/* Core Mentor Drawer */}
       <AnimatePresence>
         {isMentorOpen && (
           <>
@@ -773,93 +790,98 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
-              className="fixed top-0 right-0 bottom-0 w-full max-w-lg bg-slate-900 border-l border-slate-800 z-[80] shadow-2xl flex flex-col"
+              className="fixed top-0 right-0 bottom-0 w-full max-w-xl glass border-l border-white/5 z-[80] shadow-2xl flex flex-col backdrop-blur-3xl"
             >
-              <div className="p-8 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-indigo-600/20 border border-indigo-500/20">
-                     <Zap className="h-5 w-5 text-indigo-400" fill="currentColor" />
+              <div className="p-10 border-b border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-5">
+                  <div className="p-3 rounded-2xl bg-indigo-600/20 border border-indigo-500/20 glow-indigo">
+                     <Zap className="h-6 w-6 text-indigo-400" fill="currentColor" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-white tracking-tight">Neural Mentor</h3>
-                    <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Global Network Active</p>
+                    <h3 className="text-xl font-black text-white tracking-tighter uppercase italic leading-none">Core_Mentor</h3>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em]">Synapse_Link_Enabled</p>
                   </div>
                 </div>
                 <button 
                   onClick={() => setIsMentorOpen(false)}
-                  className="p-2 rounded-xl hover:bg-slate-800 text-slate-500 hover:text-white transition-colors"
+                  className="p-3 rounded-xl hover:bg-white/5 text-slate-500 hover:text-white transition-all outline-none"
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-6 w-6" />
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
-                <div className="bg-slate-950/50 border border-slate-800 rounded-3xl p-6">
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Target Question</div>
-                   <p className="text-white font-medium italic">"{currentQuestion.text}"</p>
+              <div className="flex-1 overflow-y-auto p-10 space-y-12 custom-scrollbar">
+                <div className="space-y-6">
+                  <div className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em]">Target_Assessment</div>
+                  <div className="p-8 rounded-[2.5rem] bg-white/[0.02] border border-white/5 shadow-inner">
+                    <p className="text-base font-black text-slate-300 leading-relaxed italic uppercase tracking-wider">
+                      "{currentQuestion?.text}"
+                    </p>
+                  </div>
                 </div>
 
-                <div className="space-y-6">
-                   <div className="flex items-start gap-4">
-                      <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center shrink-0">
-                         <Zap className="h-4 w-4 text-white" fill="currentColor" />
+                <div className="space-y-8">
+                   <div className="flex items-start gap-6">
+                      <div className="h-10 w-10 rounded-2xl bg-indigo-600 flex items-center justify-center shrink-0 glow-indigo">
+                         <Zap className="h-5 w-5 text-white" fill="currentColor" />
                       </div>
-                      <div className="bg-indigo-600/10 border border-indigo-500/20 rounded-2xl rounded-tl-none p-4 text-sm text-slate-300 leading-relaxed shadow-inner">
-                        Greetings, Analyst. I'm connected to the candidate evaluation network. How can I refine your interview strategy for this specific question?
+                      <div className="bg-indigo-600/10 border border-indigo-500/20 rounded-[2rem] rounded-tl-none p-6 text-sm font-bold text-slate-300 leading-relaxed shadow-inner uppercase tracking-wide">
+                        Connect established. How can I refine your evaluation strategy for this core segment?
                       </div>
                    </div>
 
                    {mentorResponse && (
                      <motion.div 
-                       initial={{ opacity: 0, y: 10 }}
+                       initial={{ opacity: 0, y: 20 }}
                        animate={{ opacity: 1, y: 0 }}
-                       className="flex items-start gap-4 flex-row-reverse"
+                       className="flex items-start gap-6 flex-row-reverse"
                      >
-                        <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center shrink-0">
-                           <Zap className="h-4 w-4 text-white" fill="currentColor" />
+                        <div className="h-10 w-10 rounded-2xl bg-indigo-600 flex items-center justify-center shrink-0 glow-indigo">
+                           <Zap className="h-5 w-5 text-white" fill="currentColor" />
                         </div>
-                        <div className="bg-slate-950 border border-indigo-500/30 rounded-2xl rounded-tr-none p-5 text-sm text-white leading-relaxed shadow-xl relative overflow-hidden">
-                          <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500/50" />
+                        <div className="bg-slate-950/80 border border-indigo-500/30 rounded-[2rem] rounded-tr-none p-8 text-sm font-black text-white leading-relaxed shadow-2xl relative overflow-hidden uppercase tracking-[0.05em] italic">
+                          <div className="absolute top-0 left-0 w-1.5 h-full bg-indigo-500/50" />
                           {mentorResponse}
                         </div>
                      </motion.div>
                    )}
 
                    {isMentorLoading && (
-                     <div className="flex items-center gap-3 p-4 bg-slate-800/40 rounded-2xl text-xs text-slate-500 font-bold uppercase tracking-widest border border-slate-800">
-                        <Loader2 className="h-4 w-4 animate-spin text-indigo-400" />
-                        Neural Processing...
+                     <div className="flex items-center gap-4 p-6 bg-white/[0.02] rounded-2xl text-[10px] text-slate-500 font-black uppercase tracking-[0.3em] border border-white/5">
+                        <Loader2 className="h-5 w-5 animate-spin text-indigo-400" />
+                        Processing_Strategic_Nodes...
                      </div>
                    )}
                 </div>
               </div>
 
-              <div className="p-8 bg-slate-900 border-t border-slate-800">
-                <div className="relative">
+              <div className="p-10 glass border-t border-white/5 bg-slate-950/40">
+                <div className="relative group">
                   <input
                     type="text"
                     value={mentorQuery}
                     onChange={(e) => setMentorQuery(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && askMentor()}
-                    placeholder="Ask for a hint, strategy, or sample answer..."
-                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-6 pr-16 py-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all placeholder:text-slate-700"
+                    placeholder="ENQUEUE_QUERY..."
+                    className="w-full bg-slate-950/60 border border-white/10 rounded-[2rem] pl-8 pr-20 py-6 text-sm font-black text-white focus:outline-none focus:border-indigo-500/50 focus:glow-indigo transition-all placeholder:text-slate-800 uppercase tracking-widest italic"
                   />
                   <button 
                     onClick={askMentor}
                     disabled={isMentorLoading || !mentorQuery.trim()}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-3 bg-indigo-600 rounded-xl text-white hover:bg-indigo-500 disabled:opacity-50 disabled:hover:bg-indigo-600 transition-all shadow-lg"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-4 bg-indigo-600 rounded-2xl text-white hover:bg-indigo-500 disabled:opacity-50 transition-all shadow-xl glow-indigo group active:scale-90"
                   >
-                    <Send className="h-4 w-4" />
+                    <Send className="h-5 w-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                   </button>
                 </div>
-                <div className="flex gap-2 mt-4 overflow-x-auto pb-2 custom-scrollbar">
-                  {["I need a hint", "Sample answer", "Strategy"].map((label) => (
+                <div className="flex gap-3 mt-6 overflow-x-auto pb-4 custom-scrollbar no-scrollbar-buttons">
+                  {["I need a hint", "Sample answer", "Strategy_Check", "STAR_Format"].map((label) => (
                     <button
                       key={label}
                       onClick={() => {
-                        setMentorQuery(`Give me a ${label.toLowerCase()} for this question.`);
+                        setMentorQuery(`Give me a ${label.toLowerCase().replace(/_/g, ' ')} for this segment.`);
+                        setTimeout(askMentor, 100);
                       }}
-                      className="whitespace-nowrap px-4 py-2 bg-slate-800/50 border border-slate-800 rounded-xl text-[10px] font-bold text-slate-500 hover:text-white hover:border-slate-700 transition-all uppercase tracking-widest"
+                      className="whitespace-nowrap px-6 py-3 bg-white/5 border border-white/5 rounded-2xl text-[9px] font-black text-slate-500 hover:text-white hover:border-indigo-500/30 transition-all uppercase tracking-[0.2em]"
                     >
                       {label}
                     </button>

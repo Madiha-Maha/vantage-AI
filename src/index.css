@@ -11,9 +11,26 @@
 }
 
 body {
-  @apply font-sans bg-slate-950 text-slate-200;
+  @apply font-sans bg-slate-950 text-slate-200 min-h-screen;
+  background-image: 
+    radial-gradient(at 0% 0%, hsla(263, 67%, 16%, .4) 0, transparent 50%),
+    radial-gradient(at 50% 0%, hsla(205, 100%, 15%, .3) 0, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(242, 60%, 15%, .4) 0, transparent 50%);
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+@layer utilities {
+  .glow-indigo {
+    box-shadow: 0 0 20px -5px rgba(99, 102, 241, 0.3);
+  }
+  .glow-emerald {
+    box-shadow: 0 0 20px -5px rgba(16, 185, 129, 0.3);
+  }
+  .glass {
+    @apply bg-white/[0.03] backdrop-blur-xl border border-white/[0.05];
+  }
 }
 
 /* Custom scrollbar */

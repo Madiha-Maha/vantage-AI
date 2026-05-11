@@ -50,95 +50,95 @@ export function SettingsModal({ settings, onSave, onClose }: SettingsModalProps)
         initial={{ scale: 0.9, y: 30, opacity: 0 }}
         animate={{ scale: 1, y: 0, opacity: 1 }}
         exit={{ scale: 0.9, y: 30, opacity: 0 }}
-        className="bg-slate-900 border border-slate-800 w-full max-w-2xl overflow-hidden rounded-[3rem] shadow-[0_0_100px_rgba(0,0,0,0.8)] flex flex-col relative"
+        className="glass border border-white/5 w-full max-w-2xl overflow-hidden rounded-[3rem] shadow-[0_0_100px_rgba(0,0,0,0.8)] flex flex-col relative"
       >
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.02] pointer-events-none" />
         
         {/* Header */}
-        <div className="p-8 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl bg-indigo-600/10 border border-indigo-500/20">
+        <div className="p-10 border-b border-white/5 flex items-center justify-between">
+          <div className="flex items-center gap-5">
+            <div className="p-3 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 glow-indigo">
               <Cpu className="h-6 w-6 text-indigo-400" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-white tracking-tight">Vantage Control</h3>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Neural Preference Terminal</p>
+              <h3 className="text-xl font-black text-white tracking-tighter uppercase italic leading-none">Settings_Panel</h3>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em]">Profile & Logic Preferences</p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="p-2 rounded-xl hover:bg-slate-800 text-slate-500 hover:text-white transition-colors"
+            className="p-3 rounded-xl hover:bg-white/5 text-slate-500 hover:text-white transition-all outline-none"
           >
-            <X className="h-5 w-5" />
+            <X className="h-6 w-6" />
           </button>
         </div>
 
-        <div className="p-10 space-y-10 overflow-y-auto max-h-[70vh] custom-scrollbar">
+        <div className="p-12 space-y-12 overflow-y-auto max-h-[70vh] custom-scrollbar">
           {/* Appearance */}
-          <section className="space-y-6">
-            <div className="flex items-center gap-3">
-              <Sun className="h-4 w-4 text-amber-400" />
-              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em]">Visual Interface</h4>
+          <section className="space-y-8">
+            <div className="flex items-center gap-4">
+              <Sun className="h-5 w-5 text-indigo-400" />
+              <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.5em]">VISUAL_INTERFACE</h4>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-6">
               {[
-                { id: 'dark', label: 'Eclipse', icon: Moon },
-                { id: 'light', label: 'Radiance', icon: Sun },
-                { id: 'system', label: 'Sync', icon: Monitor },
+                { id: 'dark', label: 'ECLIPSE', icon: Moon },
+                { id: 'light', label: 'RADIANCE', icon: Sun },
+                { id: 'system', label: 'SYNC', icon: Monitor },
               ].map((t) => (
                 <button
                   key={t.id}
                   onClick={() => setTheme(t.id as any)}
                   className={cn(
-                    "flex flex-col items-center gap-3 p-6 rounded-2xl border transition-all",
+                    "flex flex-col items-center gap-4 p-8 rounded-3xl border transition-all group",
                     config.theme === t.id 
-                      ? "bg-indigo-600/10 border-indigo-500 text-white shadow-lg shadow-indigo-500/10" 
-                      : "bg-slate-950/30 border-slate-800 text-slate-500 hover:border-slate-700"
+                      ? "bg-indigo-600/10 border-indigo-500 text-white shadow-xl glow-indigo" 
+                      : "bg-white/[0.02] border-white/5 text-slate-600 hover:border-white/20"
                   )}
                 >
-                  <t.icon className="h-5 w-5" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">{t.label}</span>
+                  <t.icon className={cn("h-6 w-6 transition-colors", config.theme === t.id ? "text-indigo-400" : "text-slate-700 group-hover:text-slate-500")} />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">{t.label}</span>
                 </button>
               ))}
             </div>
           </section>
 
-          {/* Privacy & Neural */}
-          <section className="space-y-6">
-            <div className="flex items-center gap-3">
-              <ShieldCheck className="h-4 w-4 text-emerald-400" />
-              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em]">Privacy & Neural Analysis</h4>
+          {/* Privacy & AI */}
+          <section className="space-y-8">
+            <div className="flex items-center gap-4">
+              <ShieldCheck className="h-5 w-5 text-emerald-400" />
+              <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.5em]">PRIVACY_&_AI_LOGIC</h4>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-6">
               {[
-                { key: 'recordingEnabled', label: 'Cloud Session Persistence', icon: Video, desc: 'Securely archive assessments for historical benchmarking.' },
-                { key: 'biometricAnalysis', label: 'Limbic Response Tracking', icon: Cpu, desc: 'Analyze micro-expressions and pulse variability via vision systems.' },
-                { key: 'privacyMode', label: 'Stealth Presence (Privacy)', icon: Eye, desc: 'Obfuscate PII from global industry leadership boards.' },
-                { key: 'notifications', label: 'Neural Uplink Notifications', icon: Bell, desc: 'Receive real-time assessment invites and proficiency alerts.' },
+                { key: 'recordingEnabled', label: 'CLOUD_SESSION_PERSISTENCE', icon: Video, desc: 'Securely archive assessments for historical benchmarking.' },
+                { key: 'biometricAnalysis', label: 'AI_RESPONSE_TRACKING', icon: Cpu, desc: 'Analyze micro-expressions and gaze stability via vision systems.' },
+                { key: 'privacyMode', label: 'STEALTH_PRESENCE', icon: Eye, desc: 'Obfuscate PII from global industry leadership boards.' },
+                { key: 'notifications', label: 'SYSTEM_SYNC_ALERTS', icon: Bell, desc: 'Receive real-time assessment invites and core proficiency alerts.' },
               ].map((item) => (
                 <div 
                   key={item.key}
-                  className="flex items-center justify-between p-6 rounded-3xl bg-slate-950/30 border border-slate-800 hover:border-slate-700 transition-colors group"
+                  className="flex items-center justify-between p-8 rounded-[2.5rem] bg-white/[0.02] border border-white/5 hover:border-white/10 transition-all group shadow-inner"
                 >
-                  <div className="flex items-center gap-5">
-                    <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 group-hover:border-slate-700 transition-colors">
-                      <item.icon className="h-5 w-5 text-slate-400" />
+                  <div className="flex items-center gap-6">
+                    <div className="p-4 rounded-2xl bg-slate-950/60 border border-white/5 group-hover:border-indigo-500/20 transition-all">
+                      <item.icon className="h-6 w-6 text-slate-600 group-hover:text-indigo-400" />
                     </div>
                     <div>
-                      <div className="text-sm font-bold text-white tracking-tight">{item.label}</div>
-                      <div className="text-[10px] text-slate-600 mt-1 font-medium">{item.desc}</div>
+                      <div className="text-sm font-black text-white tracking-widest leading-none mb-2 italic">{item.label}</div>
+                      <div className="text-[10px] text-slate-600 font-bold uppercase tracking-wider">{item.desc}</div>
                     </div>
                   </div>
                   <button
                     onClick={() => toggle(item.key as keyof UserSettings)}
                     className={cn(
-                      "w-12 h-6 rounded-full relative transition-all duration-300",
-                      config[item.key as keyof UserSettings] ? "bg-indigo-600" : "bg-slate-800"
+                      "w-14 h-7 rounded-full relative transition-all duration-500 ring-4 ring-black/20 shadow-inner",
+                      config[item.key as keyof UserSettings] ? "bg-indigo-600 glow-indigo" : "bg-slate-800"
                     )}
                   >
                     <motion.div 
-                      animate={{ x: config[item.key as keyof UserSettings] ? 26 : 4 }}
-                      className="absolute top-1 left-0 w-4 h-4 bg-white rounded-full shadow-lg"
+                      animate={{ x: config[item.key as keyof UserSettings] ? 30 : 6 }}
+                      className="absolute top-1.5 left-0 w-4 h-4 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)]"
                     />
                   </button>
                 </div>
@@ -147,28 +147,28 @@ export function SettingsModal({ settings, onSave, onClose }: SettingsModalProps)
           </section>
 
           {/* Security */}
-          <section className="p-8 rounded-[2.5rem] bg-gradient-to-br from-indigo-600/10 to-transparent border border-indigo-500/20 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(99,102,241,0.1),transparent)]" />
-            <div className="flex items-center gap-6 relative z-10">
-              <div className="h-14 w-14 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-2xl shadow-indigo-500/40">
-                <Lock className="h-6 w-6 text-white" />
+          <section className="p-10 rounded-[3rem] bg-gradient-to-br from-indigo-600/10 to-transparent border border-indigo-500/10 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(99,102,241,0.08),transparent)]" />
+            <div className="flex items-center gap-8 relative z-10">
+              <div className="h-16 w-16 rounded-[1.25rem] bg-indigo-600 flex items-center justify-center shadow-2xl glow-indigo group-hover:scale-110 transition-transform">
+                <Lock className="h-7 w-7 text-white" />
               </div>
               <div className="flex-1">
-                <h3 className="text-sm font-bold text-white tracking-tight">Security Protocol: Level 5</h3>
-                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">End-to-End Neural Encryption Active</p>
+                <h3 className="text-base font-black text-white tracking-widest italic leading-none mb-2">SECURITY_PROTOCOL: LEVEL_5</h3>
+                <p className="text-slate-600 text-[10px] font-black uppercase tracking-[0.3em]">End-to-End Encryption System Active</p>
               </div>
-              <ChevronRight className="h-5 w-5 text-indigo-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all" />
+              <ChevronRight className="h-6 w-6 text-indigo-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-3 transition-all" />
             </div>
           </section>
         </div>
 
-        <div className="p-8 bg-slate-900/50 border-t border-slate-800 flex justify-between items-center shrink-0">
-          <div className="text-[9px] text-slate-600 font-bold uppercase tracking-[0.4em]">Axis Frame v4.0.2</div>
+        <div className="p-10 glass border-t border-white/5 flex justify-between items-center shrink-0">
+          <div className="text-[10px] text-slate-700 font-black uppercase tracking-[0.5em] italic">Axis_Frame_v4.0.2</div>
           <button
             onClick={onClose}
-            className="px-10 py-4 bg-slate-950 border border-slate-800 text-white rounded-2xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-slate-900 transition-all"
+            className="px-12 py-5 bg-white/5 border border-white/5 text-slate-400 rounded-2xl font-black text-[10px] uppercase tracking-[0.4em] hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 transition-all italic hover:glow-red"
           >
-            Terminal Shutdown
+            DISCONNECT_SESSION
           </button>
         </div>
       </motion.div>

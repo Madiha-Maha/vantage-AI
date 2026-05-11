@@ -18,60 +18,71 @@ export function InterviewSetup({ onStart }: { onStart: (config: InterviewConfig)
   ];
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-4">
+    <div className="max-w-5xl mx-auto py-20 px-4 md:px-12">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-slate-900 border border-slate-800 rounded-3xl p-10 shadow-2xl backdrop-blur-md"
+        className="glass rounded-[4rem] p-12 md:p-16 shadow-2xl relative overflow-hidden"
       >
-        <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">Configure Your Session</h2>
-        <p className="text-slate-500 mb-10 font-medium">Define your target trajectory to initialize industry-specific performance modeling.</p>
+        <div className="absolute top-0 left-0 w-2 h-full bg-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.5)]" />
+        <h2 className="text-5xl font-black text-white mb-4 tracking-tighter uppercase italic leading-none">Configure_Session</h2>
+        <p className="text-slate-500 mb-16 font-bold uppercase tracking-wider max-w-2xl">Define your target trajectory to initialize industry-specific performance modeling.</p>
 
-        <div className="space-y-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-3">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Target Role</label>
-              <input
-                type="text"
-                value={config.role}
-                onChange={(e) => setConfig({ ...config, role: e.target.value })}
-                placeholder="e.g. Senior Product Designer"
-                className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all placeholder:text-slate-700"
-              />
+        <div className="space-y-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div className="space-y-4">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-1">TARGET_ROLE</label>
+              <div className="relative group">
+                <input
+                  type="text"
+                  value={config.role}
+                  onChange={(e) => setConfig({ ...config, role: e.target.value })}
+                  placeholder="e.g. Senior Product Designer"
+                  className="w-full bg-slate-950/40 border border-white/5 rounded-2xl px-6 py-5 text-sm font-bold text-white focus:outline-none focus:border-indigo-500/50 focus:glow-indigo transition-all placeholder:text-slate-800 uppercase tracking-widest shadow-inner"
+                />
+                <div className="absolute top-1/2 -translate-y-1/2 right-6 p-2 rounded-lg bg-white/5 opacity-0 group-focus-within:opacity-100 transition-opacity">
+                  <Sparkles className="h-4 w-4 text-indigo-400" />
+                </div>
+              </div>
             </div>
-            <div className="space-y-3">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Industry Vertical</label>
+            <div className="space-y-4">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-1">INDUSTRY_VERTICAL</label>
               <input
                 type="text"
                 value={config.industry}
                 onChange={(e) => setConfig({ ...config, industry: e.target.value })}
                 placeholder="e.g. Fintech, E-commerce"
-                className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all placeholder:text-slate-700"
+                className="w-full bg-slate-950/40 border border-white/5 rounded-2xl px-6 py-5 text-sm font-bold text-white focus:outline-none focus:border-indigo-500/50 focus:glow-indigo transition-all placeholder:text-slate-800 uppercase tracking-widest shadow-inner"
               />
             </div>
           </div>
 
-          <div className="space-y-6">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Complexity Level</label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="space-y-8">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-1">COMPLEXITY_LEVEL</label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {difficulties.map((d) => (
                 <button
                   key={d.id}
                   onClick={() => setConfig({ ...config, difficulty: d.id })}
                   className={cn(
-                    "relative flex flex-col items-center text-center p-8 rounded-2xl border transition-all duration-300",
+                    "relative flex flex-col items-center text-center p-10 rounded-[2.5rem] border transition-all duration-500 group",
                     config.difficulty === d.id
-                      ? "bg-indigo-500/5 border-indigo-500 shadow-lg shadow-indigo-500/10"
-                      : "bg-slate-950/30 border-slate-800 hover:border-slate-700"
+                      ? "bg-indigo-500/5 border-indigo-500 glow-indigo"
+                      : "bg-white/[0.02] border-white/5 hover:border-white/20"
                   )}
                 >
-                  <d.icon className={cn("h-8 w-8 mb-4", config.difficulty === d.id ? "text-indigo-400" : "text-slate-600")} />
-                  <div className="font-bold text-white tracking-wide">{d.id}</div>
-                  <div className="text-[10px] text-slate-500 mt-2 font-medium leading-relaxed uppercase tracking-tighter">{d.desc}</div>
+                  <div className={cn(
+                    "p-5 rounded-2xl mb-6 transition-all",
+                    config.difficulty === d.id ? "bg-indigo-500/10 text-indigo-400" : "bg-white/5 text-slate-600 group-hover:text-slate-400"
+                  )}>
+                    <d.icon className="h-8 w-8" />
+                  </div>
+                  <div className="font-black text-white uppercase italic tracking-[0.2em] mb-2">{d.id}</div>
+                  <div className="text-[9px] text-slate-500 font-black uppercase tracking-widest leading-relaxed">{d.desc}</div>
                   {config.difficulty === d.id && (
                     <motion.div
                       layoutId="choice-indicator"
-                      className="absolute inset-x-0 bottom-0 h-1 bg-indigo-500 rounded-full"
+                      className="absolute inset-x-0 bottom-0 h-1.5 bg-indigo-500 rounded-full glow-indigo shadow-[0_0_20px_rgba(99,102,241,0.8)]"
                     />
                   )}
                 </button>
@@ -79,31 +90,31 @@ export function InterviewSetup({ onStart }: { onStart: (config: InterviewConfig)
             </div>
           </div>
 
-          <div className="pt-6">
+          <div className="pt-10">
             <button
               onClick={() => onStart(config)}
-              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-5 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-xl shadow-indigo-500/20 transform hover:-translate-y-1 active:translate-y-0"
+              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-8 rounded-[2.5rem] flex items-center justify-center gap-4 transition-all shadow-xl glow-indigo group active:scale-95 italic uppercase tracking-[0.4em]"
             >
-              Initialize Assessment
-              <ChevronRight className="h-5 w-5" />
+              EXECUTE_SESSION
+              <ChevronRight className="h-6 w-6 group-hover:translate-x-2 transition-transform" />
             </button>
           </div>
         </div>
       </motion.div>
 
-      <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
         {[
-          { label: "Neural Scenarios", val: "10,000+", icon: Sparkles },
-          { label: "Global Benchmarks", val: "50+", icon: Target },
-          { label: "Real-time Metrics", val: "Enabled", icon: Zap },
+          { label: "AI_SCENARIOS", val: "10,000+", icon: Sparkles },
+          { label: "GLOBAL_BENCHMARKS", val: "50+", icon: Target },
+          { label: "CORE_LEADERSHIP", val: "SUPPORTED", icon: Zap },
         ].map((stat, i) => (
-          <div key={i} className="flex items-center gap-5 px-8 py-5 rounded-2xl bg-slate-900 border border-slate-800/50">
-            <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
-              <stat.icon className="h-5 w-5 text-indigo-400" />
+          <div key={i} className="flex items-center gap-6 p-8 rounded-[2.5rem] glass border-white/5 shadow-2xl transition-all hover:scale-105">
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 group-hover:glow-indigo">
+              <stat.icon className="h-6 w-6 text-indigo-400" />
             </div>
             <div>
-              <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{stat.label}</div>
-              <div className="text-xl font-bold text-white">{stat.val}</div>
+              <div className="text-[10px] text-slate-600 font-black uppercase tracking-[0.3em] mb-1">{stat.label}</div>
+              <div className="text-2xl font-black text-white uppercase italic tracking-tighter">{stat.val}</div>
             </div>
           </div>
         ))}

@@ -100,6 +100,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await signInWithPopup(auth, provider);
     } catch (error: any) {
+      if (error.code === 'auth/popup-closed-by-user') {
+        const cancelError = new Error("Sign-in cancelled. Please keep the window open to authenticate.");
+        (cancelError as any).code = error.code;
+        throw cancelError;
+      }
+      if (error.code === 'auth/popup-blocked') {
+        const blockError = new Error("Popup blocked by browser. Please allow popups for this site and try again.");
+        (blockError as any).code = error.code;
+        throw blockError;
+      }
       console.error("Error signing in with Google:", error);
       throw error;
     }

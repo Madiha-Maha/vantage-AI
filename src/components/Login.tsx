@@ -2,99 +2,167 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Logo } from './Logo';
 import { useAuth } from '../lib/AuthContext';
-import { Zap, Shield, Sparkles, Loader2 } from 'lucide-react';
+import { Zap, Shield, Sparkles, Loader2, AlertCircle } from 'lucide-react';
 
 export function Login() {
   const { signInAsGuest } = useAuth();
   const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
   const handleEnter = async () => {
     setLoading(true);
+    setError(null);
     try {
       await signInAsGuest();
-    } catch (error) {
-      console.error(error);
+    } catch (err: any) {
+      console.error(err);
+      if (err.code === 'auth/popup-closed-by-user') {
+        setError("Sign-in cancelled. Click the button again to try again.");
+      } else if (err.code === 'auth/popup-blocked') {
+        setError("Popup blocked! Please enable popups in your browser and try again.");
+      } else {
+        setError(err.message || "Initialization failure. Check your connection or popup settings.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8 bg-slate-950 font-sans selection:bg-indigo-500/30">
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none" />
+    <div className="min-h-screen flex items-center justify-center p-8 font-sans selection:bg-indigo-500/30 overflow-hidden">
+      {/* Decorative noise/grain overlay */}
+      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.05] pointer-events-none mix-blend-overlay" />
       
-      {/* Dynamic Background Elements */}
-      <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-indigo-600/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
-      <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-emerald-600/5 blur-[120px] rounded-full translate-y-1/2 -translate-x-1/2" />
+      {/* Abstract Background Shapes */}
+      <motion.div 
+        animate={{ 
+          scale: [1, 1.2, 1],
+          opacity: [0.1, 0.2, 0.1],
+          rotate: [0, 90, 0]
+        }}
+        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        className="absolute -top-1/4 -right-1/4 w-[800px] h-[800px] bg-indigo-600/10 blur-[150px] rounded-full" 
+      />
+      <motion.div 
+        animate={{ 
+          scale: [1.2, 1, 1.2],
+          opacity: [0.1, 0.15, 0.1],
+          rotate: [0, -90, 0]
+        }}
+        transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+        className="absolute -bottom-1/4 -left-1/4 w-[600px] h-[600px] bg-emerald-600/10 blur-[150px] rounded-full" 
+      />
 
       <motion.div 
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="relative w-full max-w-lg"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+        className="relative w-full max-w-xl"
       >
-        <div className="bg-slate-900/40 border border-white/5 p-12 md:p-16 rounded-[4rem] shadow-2xl backdrop-blur-3xl overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+        {/* The Card */}
+        <div className="glass p-12 md:p-20 rounded-[3rem] shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] overflow-hidden group">
+          {/* Animated accent lines */}
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent transform -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
           
-          <div className="relative flex flex-col items-center text-center">
-            <div className="mb-12">
-              <Logo size="lg" />
-            </div>
-            
-            <div className="space-y-4 mb-12">
-              <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-white italic leading-tight">
-                VANTAGE <span className="text-indigo-500">_OS</span>
-              </h1>
-              <p className="text-slate-500 text-xs font-bold uppercase tracking-[0.4em] leading-relaxed">
-                Autonomous Performance <br/>
-                Assessment Environment
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-12">
-              <div className="flex flex-col items-start p-6 rounded-3xl bg-white/5 border border-white/5 text-left">
-                 <Shield className="h-5 w-5 text-indigo-400 mb-3" />
-                 <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Encrypted</div>
-                 <div className="text-xs text-white font-medium">Session isolation active</div>
-              </div>
-              <div className="flex flex-col items-start p-6 rounded-3xl bg-white/5 border border-white/5 text-left">
-                 <Sparkles className="h-5 w-5 text-emerald-400 mb-3" />
-                 <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Neural</div>
-                 <div className="text-xs text-white font-medium">Real-time biometrics</div>
-              </div>
-            </div>
-
-            <button
-              onClick={handleEnter}
-              disabled={loading}
-              className="w-full relative group overflow-hidden px-8 py-6 bg-white text-slate-950 rounded-3xl font-black text-sm uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:scale-100"
+          <div className="relative flex flex-col items-center">
+            <motion.div 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="mb-12 relative"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-emerald-500 opacity-0 group-hover:opacity-10 transition-opacity" />
-              <span className="relative flex items-center justify-center gap-3">
-                {loading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <>
-                    Initialize Session
-                    <Zap className="h-4 w-4" fill="currentColor" />
-                  </>
-                )}
-              </span>
-            </button>
-
-            <div className="mt-12 flex flex-col items-center gap-4">
-              <div className="h-px w-12 bg-slate-800" />
-              <p className="text-[9px] text-slate-600 font-bold uppercase tracking-[0.5em]">
-                Secure Protocol v4.0.0
-              </p>
+              <div className="absolute inset-0 bg-indigo-500/20 blur-2xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <Logo size="lg" />
+            </motion.div>
+            
+            <div className="text-center space-y-6 mb-16">
+              <motion.h1 
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="text-6xl md:text-7xl font-black tracking-tighter text-white italic leading-none"
+              >
+                VANTAGE <span className="text-indigo-500 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]">AI</span>
+              </motion.h1>
+              <motion.p 
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.6em]"
+              >
+                Cognitive Performance <br className="md:hidden" /> Enhancement System
+              </motion.p>
             </div>
+
+            <div className="grid grid-cols-2 gap-4 w-full mb-16">
+              {[
+                { icon: Shield, label: "Private", desc: "Local Sync", color: "text-indigo-400" },
+                { icon: Sparkles, label: "Neural", desc: "Live Edge", color: "text-emerald-400" }
+              ].map((item, idx) => (
+                <motion.div 
+                  key={idx}
+                  initial={{ opacity: 0, x: idx === 0 ? -20 : 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 + idx * 0.1 }}
+                  className="flex flex-col items-center p-6 rounded-[2rem] bg-white/5 border border-white/5 hover:bg-white/[0.08] transition-colors group/item"
+                >
+                  <item.icon className={`h-5 w-5 ${item.color} mb-3 group-hover/item:scale-110 transition-transform`} />
+                  <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">{item.label}</div>
+                  <div className="text-[10px] text-white font-medium opacity-60">{item.desc}</div>
+                </motion.div>
+              ))}
+            </div>
+
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.7 }}
+              className="w-full"
+            >
+              <button
+                onClick={handleEnter}
+                disabled={loading}
+                className="w-full group relative overflow-hidden px-8 py-8 bg-white text-slate-950 rounded-[2rem] font-black text-sm uppercase tracking-[0.3em] transition-all hover:scale-[1.02] active:scale-98 disabled:opacity-50 glow-indigo"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-emerald-500 opacity-0 group-hover:opacity-10 transition-opacity" />
+                <span className="relative flex items-center justify-center gap-4">
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  ) : (
+                    <>
+                      Execute Sequence
+                      <Zap className="h-5 w-5 text-indigo-600" fill="currentColor" />
+                    </>
+                  )}
+                </span>
+              </button>
+            </motion.div>
+
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, h: 0 }}
+                animate={{ opacity: 1, h: 'auto' }}
+                className="mt-8 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-3 w-full"
+              >
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                {error}
+              </motion.div>
+            )}
           </div>
         </div>
 
-        {/* Footer info to look pro */}
-        <div className="mt-8 flex justify-between px-8 text-[9px] font-bold text-slate-700 uppercase tracking-widest">
-           <span>System: Operational</span>
-           <span>Uptime: 99.9%</span>
+        {/* System Status Display */}
+        <div className="mt-12 flex items-center justify-between px-12 text-[10px] font-mono font-bold tracking-widest">
+           <div className="flex items-center gap-3 text-emerald-500/50">
+              <div className="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+              SYSTEM_READY
+           </div>
+           <div className="text-slate-600">
+              BUILD_ID: 242114040527
+           </div>
+           <div className="text-indigo-500/50">
+              VANTAGE_CORE_v4
+           </div>
         </div>
       </motion.div>
     </div>
