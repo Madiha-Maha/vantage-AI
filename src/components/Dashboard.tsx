@@ -175,9 +175,24 @@ export function Dashboard({ history, onStartNew, profile, onOpenProfile }: Dashb
              Share the Vantage Terminal URL with others to collaborate or track team benchmarks. Each session is uniquely isolated and encrypted.
            </p>
            <button 
-             onClick={() => {
-               navigator.clipboard.writeText(window.location.href);
-               alert("Terminal Access Link Copied to Clipboard.");
+             onClick={async () => {
+               try {
+                 if (navigator.clipboard && window.location.href) {
+                   await navigator.clipboard.writeText(window.location.href);
+                   alert("Terminal Access Link Copied to Clipboard.");
+                 } else {
+                   throw new Error("Clipboard API unavailable");
+                 }
+               } catch (e) {
+                 console.warn("Clipboard failed", e);
+                 const input = document.createElement('input');
+                 input.value = window.location.href;
+                 document.body.appendChild(input);
+                 input.select();
+                 document.execCommand('copy');
+                 document.body.removeChild(input);
+                 alert("Terminal Access Link Copied (Fallback).");
+               }
              }}
              className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-bold text-xs uppercase tracking-[0.2em] transition-all shadow-xl shadow-emerald-500/20 active:scale-95"
            >

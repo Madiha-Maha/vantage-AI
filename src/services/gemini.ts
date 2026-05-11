@@ -24,25 +24,37 @@ const extractJson = (text: string) => {
     }
     return JSON.parse(text);
   } catch (e) {
-    console.warn("JSON extraction failed, returning default", e);
+    console.warn("JSON extraction failed", e);
     return null;
   }
 };
 
 export class GeminiService {
   static async generateQuestions(config: InterviewConfig, count: number = 5): Promise<InterviewQuestion[]> {
-    const prompt = `Role: ${config.role}, Difficulty: ${config.difficulty}, Industry: ${config.industry}. Generate ${count} interview questions in JSON: [{id, text}]. No other text.`;
+    const prompt = `Role: ${config.role}, Difficulty: ${config.difficulty}, Industry: ${config.industry}. Generate ${count} interview questions.`;
 
     try {
-      const response = await getAI().models.generateContent({
+      const model = getAI().getGenerativeModel({
         model: MODEL_NAME,
-        contents: prompt,
-        config: {
+        generationConfig: {
           responseMimeType: "application/json",
-        },
+          responseSchema: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                id: { type: Type.STRING },
+                text: { type: Type.STRING }
+              },
+              required: ["id", "text"]
+            }
+          }
+        }
       });
 
-      const text = response.text || "";
+      const response = await model.generateContent(prompt);
+      const text = response.response.text();
+
       return extractJson(text) || [
         { id: "1", text: "Tell me about your career highlights." },
         { id: "2", text: "How do you handle difficult workplace challenges?" }
@@ -62,21 +74,33 @@ export class GeminiService {
     durationSeconds: number,
     role: string
   ): Promise<QuestionAnalysis> {
-    const wordCount = transcript.split(/\s+/).length;
-    const speakingSpeed = Math.round((wordCount / durationSeconds) * 60);
+    const wordCount = (transcript || "").split(/\s+/).length;
+    const speakingSpeed = durationSeconds > 0 ? Math.round((wordCount / durationSeconds) * 60) : 0;
 
-    const prompt = `Role: ${role}. Q: "${question}". A: "${transcript}". Speed: ${speakingSpeed}wpm. Analyze in JSON: score(0-100), confidence(0-100), keywordsFound(string[]), tips(string[3]), eyeContactScore(0-100). Be concise. Professional tone. No AI mention.`;
+    const prompt = `Role: ${role}. Q: "${question}". A: "${transcript}". Speed: ${speakingSpeed}wpm.`;
 
     try {
-      const response = await getAI().models.generateContent({
+      const model = getAI().getGenerativeModel({
         model: MODEL_NAME,
-        contents: prompt,
-        config: {
+        generationConfig: {
           responseMimeType: "application/json",
-        },
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              score: { type: Type.NUMBER },
+              confidence: { type: Type.NUMBER },
+              keywordsFound: { type: Type.ARRAY, items: { type: Type.STRING } },
+              tips: { type: Type.ARRAY, items: { type: Type.STRING } },
+              eyeContactScore: { type: Type.NUMBER }
+            },
+            required: ["score", "confidence", "keywordsFound", "tips", "eyeContactScore"]
+          }
+        }
       });
 
-      const text = response.text || "";
+      const response = await model.generateContent(prompt);
+      const text = response.response.text();
+
       const analysis = extractJson(text);
       if (!analysis) throw new Error("Could not parse analysis");
       return { ...analysis, speakingSpeed };
@@ -108,14 +132,11 @@ export class GeminiService {
     `;
 
     try {
-      const response = await getAI().models.generateContent({
-        model: MODEL_NAME,
-        contents: prompt,
-      });
-
-      return response.text || "Focus on the STAR method (Situation, Task, Action, Result) to structure your response.";
+      const model = getAI().getGenerativeModel({ model: MODEL_NAME });
+      const response = await model.generateContent(prompt);
+      return response.response.text() || "Focus on the STAR method (Situation, Task, Action, Result) to structure your response.";
     } catch (error) {
-      return "I'm having trouble connecting to my neural network. Try focusing on your core value proposition.";
+      return "I'm having trouble connecting (Neural Link Down). Try focusing on your core value proposition.";
     }
   }
 
@@ -140,13 +161,11 @@ export class GeminiService {
     `;
 
     try {
-      const response = await getAI().models.generateContentStream({
-        model: MODEL_NAME,
-        contents: prompt,
-      });
+      const model = getAI().getGenerativeModel({ model: MODEL_NAME });
+      const result = await model.generateContentStream(prompt);
 
-      for await (const chunk of response) {
-        const text = chunk.text;
+      for await (const chunk of result.stream) {
+        const text = chunk.text();
         if (text) onChunk(text);
       }
     } catch (error) {

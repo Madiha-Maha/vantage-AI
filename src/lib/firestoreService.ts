@@ -29,7 +29,7 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
   throw new Error(JSON.stringify(errInfo));
 }
 
-export function subscribeToHistory(userId: string, callback: (history: InterviewSession[]) => void) {
+export function subscribeToHistory(userId: string, callback: (history: InterviewSession[]) => void, onError?: (error: any) => void) {
   const path = `users/${userId}/sessions`;
   const q = query(collection(db, path), orderBy('date', 'desc'));
 
@@ -44,7 +44,8 @@ export function subscribeToHistory(userId: string, callback: (history: Interview
     });
     callback(history);
   }, (error) => {
-    handleFirestoreError(error, OperationType.LIST, path);
+    console.error("History Subscription Error:", error);
+    if (onError) onError(error);
   });
 }
 

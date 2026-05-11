@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, signInAnonymously } from 'firebase/auth';
+import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { auth, db } from './firebase';
 import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { UserProfile, UserSettings } from '../types';
@@ -96,20 +96,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
     try {
       await signInWithPopup(auth, provider);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error signing in with Google:", error);
+      throw error;
     }
   };
 
   const signInAsGuest = async () => {
     try {
-      // Reverting to Google Sign-in because Anonymous Auth is restricted by default
-      // We will brand it as "Initialize Session" in the UI to keep it professional
       await signInWithGoogle();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error initializing session:", error);
+      throw error;
     }
   };
 
