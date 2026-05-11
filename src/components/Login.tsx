@@ -20,6 +20,8 @@ export function Login() {
         setError("Sign-in cancelled. Click the button again to try again.");
       } else if (err.code === 'auth/popup-blocked') {
         setError("Popup blocked! Please enable popups in your browser and try again.");
+      } else if (err.code === 'auth/unauthorized-domain') {
+        setError("Unauthorized Domain! Add this domain to your Firebase Console (Authentication > Settings > Authorized domains).");
       } else {
         setError(err.message || "Initialization failure. Check your connection or popup settings.");
       }

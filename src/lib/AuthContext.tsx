@@ -110,6 +110,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         (blockError as any).code = error.code;
         throw blockError;
       }
+      if (error.code === 'auth/unauthorized-domain') {
+        const domainError = new Error("Unauthorized Domain: Please add this domain to your Firebase Console settings (Authentication > Settings > Authorized domains).");
+        (domainError as any).code = error.code;
+        throw domainError;
+      }
       console.error("Error signing in with Google:", error);
       throw error;
     }

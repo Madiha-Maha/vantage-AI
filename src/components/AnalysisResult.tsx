@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { motion } from "motion/react";
 import { CheckCircle2, ChevronRight, BarChart3, TrendingUp, MessageSquare, AlertTriangle, Home } from "lucide-react";
 import { InterviewQuestion } from "../types";
@@ -11,7 +11,7 @@ interface AnalysisResultProps {
   onFinish: () => void;
 }
 
-export function AnalysisResult({ questions, hasSaved, onSave, onFinish }: AnalysisResultProps) {
+export const AnalysisResult = memo(({ questions, hasSaved, onSave, onFinish }: AnalysisResultProps) => {
   const count = questions.length || 1;
   const overallScore = Math.round(questions.reduce((acc, q) => acc + (q.analysis?.score || 0), 0) / count);
   const avgConfidence = Math.round(questions.reduce((acc, q) => acc + (q.analysis?.confidence || 0), 0) / count);
@@ -86,9 +86,9 @@ export function AnalysisResult({ questions, hasSaved, onSave, onFinish }: Analys
         {questions.map((q, idx) => (
           <motion.div
             key={q.id}
-            initial={{ opacity: 0, y: 30 }}
+            initial={idx < 5 ? { opacity: 0, y: 30 } : { opacity: 1, y: 0 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.1 }}
+            transition={{ delay: idx < 5 ? idx * 0.1 : 0 }}
             className="glass rounded-[4rem] p-12 shadow-2xl relative overflow-hidden group transition-all"
           >
             <div className="absolute top-0 left-0 w-2 h-full bg-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.5)]" />
@@ -176,7 +176,7 @@ export function AnalysisResult({ questions, hasSaved, onSave, onFinish }: Analys
       </div>
     </div>
   );
-}
+});
 
 function Trophy({ className }: { className?: string }) {
   return (

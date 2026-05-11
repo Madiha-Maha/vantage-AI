@@ -1,3 +1,4 @@
+import React, { memo } from "react";
 import { Logo } from "./Logo";
 import { motion } from "motion/react";
 import { User, Settings, LayoutDashboard, Rocket, LogOut } from "lucide-react";
@@ -14,7 +15,7 @@ interface NavbarProps {
   onOpenSettings: () => void;
 }
 
-export function Navbar({ className, activeTab, onTabChange, profile, onOpenProfile, onOpenSettings }: NavbarProps) {
+export const Navbar = memo(({ className, activeTab, onTabChange, profile, onOpenProfile, onOpenSettings }: NavbarProps) => {
   const { logout } = useAuth();
   const tabs = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -22,7 +23,7 @@ export function Navbar({ className, activeTab, onTabChange, profile, onOpenProfi
   ];
 
   return (
-    <nav className={cn("sticky top-0 z-50 w-full glass border-b border-white/5 bg-slate-950/40 backdrop-blur-2xl px-4 md:px-12", className)}>
+    <nav className={cn("sticky top-0 z-50 w-full glass border-b border-white/5 bg-slate-950/40 backdrop-blur-xl px-4 md:px-12", className)}>
       <div className="mx-auto flex h-24 max-w-7xl items-center justify-between">
         <div className="flex items-center gap-12">
           <Logo size="sm" onClick={() => onTabChange('landing')} className="cursor-pointer hover:scale-110 transition-transform" />
@@ -93,4 +94,4 @@ export function Navbar({ className, activeTab, onTabChange, profile, onOpenProfi
       </div>
     </nav>
   );
-}
+});
