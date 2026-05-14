@@ -105,6 +105,7 @@ export default function App() {
         return currentResults ? (
           <AnalysisResult 
             questions={currentResults} 
+            role={currentConfig?.role || "Candidate"}
             hasSaved={hasSavedCurrent}
             onSave={handleManualSave}
             onFinish={() => {
@@ -142,7 +143,13 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 selection:bg-indigo-500/30">
+    <div className="min-h-screen bg-slate-950 text-slate-200 selection:bg-indigo-500/30 relative">
+      {isGuest && (
+        <>
+          <div className="guest-scanline" />
+          <div className="scanline-move" />
+        </>
+      )}
       {activeTab !== 'landing' && (
         <Navbar 
           activeTab={activeTab} 

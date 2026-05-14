@@ -5,7 +5,7 @@ import { useAuth } from '../lib/AuthContext';
 import { Zap, Shield, Sparkles, Loader2, AlertCircle } from 'lucide-react';
 
 export function Login() {
-  const { signInAsGuest } = useAuth();
+  const { signInWithGoogle, signInAsGuest } = useAuth();
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -13,17 +13,24 @@ export function Login() {
     setLoading(true);
     setError(null);
     try {
-      await signInAsGuest();
+      await signInWithGoogle();
     } catch (err: any) {
       console.error(err);
       if (err.code === 'auth/popup-closed-by-user') {
-        setError("Sign-in cancelled. Click the button again to try again.");
+        setError("Sign-in cancelled. Use guest mode if you prefer.");
       } else if (err.code === 'auth/popup-blocked') {
-        setError("Popup blocked! Please enable popups in your browser and try again.");
+        setError("Popup blocked! Use guest mode or enable popups.");
       } else if (err.code === 'auth/unauthorized-domain') {
-        setError(`Unauthorized Domain! Please add "${window.location.hostname}" to your Firebase Console (Authentication > Settings > Authorized domains).`);
+        setError(`Unauthorized Domain! Automatically entering LOCAL GUEST MODE...`);
+        // Auto-fallback for unauthorized domains to avoid exhausting the user
+        setTimeout(() => {
+          signInAsGuest();
+        }, 1500);
       } else {
-        setError(err.message || "Initialization failure. Check your connection or popup settings.");
+        setError(err.message || "Initialization failure. Switching to Local Mode...");
+        setTimeout(() => {
+          signInAsGuest();
+        }, 2000);
       }
     } finally {
       setLoading(false);

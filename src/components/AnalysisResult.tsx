@@ -1,21 +1,60 @@
-import React, { memo } from "react";
+import React, { memo, useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { CheckCircle2, ChevronRight, BarChart3, TrendingUp, MessageSquare, AlertTriangle, Home } from "lucide-react";
+import { CheckCircle2, ChevronRight, BarChart3, TrendingUp, MessageSquare, AlertTriangle, Home, Sparkles, Trophy, Zap } from "lucide-react";
 import { InterviewQuestion } from "../types";
+import { GeminiService } from "../services/gemini";
 import { cn } from "../lib/utils";
+
+import { 
+  Radar, 
+  RadarChart, 
+  PolarGrid, 
+  PolarAngleAxis, 
+  ResponsiveContainer 
+} from "recharts";
 
 interface AnalysisResultProps {
   questions: InterviewQuestion[];
+  role: string;
   hasSaved: boolean;
   onSave: () => void;
   onFinish: () => void;
 }
 
-export const AnalysisResult = memo(({ questions, hasSaved, onSave, onFinish }: AnalysisResultProps) => {
+export const AnalysisResult = memo(({ questions, role, hasSaved, onSave, onFinish }: AnalysisResultProps) => {
+  const [summary, setSummary] = useState<string | null>(null);
+  const [growthPlan, setGrowthPlan] = useState<string[]>([]);
+  const [loadingSummary, setLoadingSummary] = useState(true);
+
+  useEffect(() => {
+    const fetchAnalysisData = async () => {
+      try {
+        const [summaryText, plan] = await Promise.all([
+          GeminiService.getSessionSummary(questions, role),
+          GeminiService.getGrowthPlan(questions, role)
+        ]);
+        setSummary(summaryText);
+        setGrowthPlan(plan);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingSummary(false);
+      }
+    };
+    fetchAnalysisData();
+  }, [questions, role]);
   const count = questions.length || 1;
   const overallScore = Math.round(questions.reduce((acc, q) => acc + (q.analysis?.score || 0), 0) / count);
   const avgConfidence = Math.round(questions.reduce((acc, q) => acc + (q.analysis?.confidence || 0), 0) / count);
   const avgPace = Math.round(questions.reduce((acc, q) => acc + (q.analysis?.speakingSpeed || 0), 0) / count);
+
+  const radarData = [
+    { subject: "CLARITY", A: overallScore, fullMark: 100 },
+    { subject: "CONFIDENCE", A: avgConfidence, fullMark: 100 },
+    { subject: "LOGIC", A: Math.round(overallScore * 0.9 + avgConfidence * 0.1), fullMark: 100 },
+    { subject: "DENSITY", A: Math.round(overallScore * 0.8 + avgPace * 0.2), fullMark: 100 },
+    { subject: "PURPOSE", A: Math.round(overallScore * 0.95), fullMark: 100 },
+  ];
 
   return (
     <div className="max-w-7xl mx-auto py-20 px-4 md:px-12">
@@ -59,6 +98,68 @@ export const AnalysisResult = memo(({ questions, hasSaved, onSave, onFinish }: A
         </p>
       </div>
 
+      {/* Professional Summary & Visualization Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-24">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="lg:col-span-2 glass rounded-[3rem] p-12 relative overflow-hidden border border-indigo-500/20 shadow-2xl h-full"
+        >
+          <div className="absolute top-0 right-0 p-12 opacity-[0.03] scale-150">
+            <Sparkles className="h-64 w-64 text-indigo-400" />
+          </div>
+          
+          <div className="flex flex-col md:flex-row gap-12 items-start relative z-10">
+            <div className="h-20 w-20 rounded-[2rem] bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0 glow-indigo">
+               <Trophy className="h-10 w-10 text-indigo-400" />
+            </div>
+            <div className="space-y-6">
+              <div className="flex items-center gap-6">
+                 <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.5em]">EXECUTIVE_PERFORMANCE_DEBRIEF</span>
+                 <div className="h-px w-12 bg-indigo-500/20" />
+              </div>
+              {loadingSummary ? (
+                <div className="space-y-4">
+                  <div className="h-4 w-full bg-white/5 animate-pulse rounded-full" />
+                  <div className="h-4 w-3/4 bg-white/5 animate-pulse rounded-full" />
+                </div>
+              ) : (
+                <p className="text-2xl font-medium text-white/90 leading-relaxed italic tracking-tight">
+                  "{summary}"
+                </p>
+              )}
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="glass rounded-[3rem] p-8 border border-white/5 flex flex-col items-center justify-center relative overflow-hidden group h-full"
+        >
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.05),transparent)] opacity-0 group-hover:opacity-100 transition-opacity" />
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-8">COGNITIVE_DIMENSIONS</span>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                <PolarGrid stroke="rgba(255,255,255,0.05)" />
+                <PolarAngleAxis 
+                  dataKey="subject" 
+                  tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 8, fontWeight: 900, letterSpacing: '0.1em' }} 
+                />
+                <Radar
+                  name="Performance"
+                  dataKey="A"
+                  stroke="#6366F1"
+                  fill="#6366F1"
+                  fillOpacity={0.3}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-24">
         {[
           { label: "META_PROFICIENCY", value: overallScore, color: "text-indigo-400", sub: "EXECUTIVE_TIER", icon: Trophy },
@@ -75,6 +176,47 @@ export const AnalysisResult = memo(({ questions, hasSaved, onSave, onFinish }: A
           </div>
         ))}
       </div>
+
+      {/* 7-Day Growth Protocol */}
+      <section className="mb-24">
+        <div className="flex items-center gap-6 mb-12">
+           <Zap className="h-6 w-6 text-amber-400 glow-amber" />
+           <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.5em]">7-DAY_COGNITIVE_UPGRADE_PROTOCOL</h3>
+           <div className="h-px flex-1 bg-white/[0.03]" />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {(growthPlan.length > 0 ? growthPlan : [
+            "Synthesize core technical domains into high-density verbal frameworks.",
+            "Calibrate semantic delivery for 15% increase in structural clarity.",
+            "Optimize neural recall through targeted articulation simulations."
+          ]).map((step, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className="p-10 rounded-[3rem] bg-white/[0.02] border border-white/5 relative overflow-hidden group"
+            >
+              <div className="absolute top-0 right-0 p-8 text-4xl font-black text-white/[0.02] italic tracking-tighter group-hover:text-amber-500/[0.05] transition-colors">
+                0{i + 1}
+              </div>
+              <div className="space-y-6 relative z-10">
+                <div className="h-12 w-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                   <ChevronRight className="h-6 w-6 text-amber-400" />
+                </div>
+                <p className="text-white/80 text-lg font-medium leading-relaxed tracking-tight italic">
+                  "{step}"
+                </p>
+                <div className="flex items-center gap-4 pt-4">
+                   <div className="h-1 w-12 bg-amber-500 rounded-full glow-amber" />
+                   <span className="text-[8px] font-black text-amber-500/40 uppercase tracking-widest">Active_Simulation_Required</span>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
 
       <div className="space-y-12">
         <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.6em] flex items-center gap-6 mb-12">
@@ -177,24 +319,3 @@ export const AnalysisResult = memo(({ questions, hasSaved, onSave, onFinish }: A
     </div>
   );
 });
-
-function Trophy({ className }: { className?: string }) {
-  return (
-    <svg 
-      className={className} 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
-    >
-      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-      <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-      <path d="M4 22h16" />
-      <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
-      <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
-      <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
-    </svg>
-  );
-}

@@ -12,10 +12,13 @@ import {
   Briefcase, 
   Sparkles,
   ChevronRight,
-  Code2
+  Code2,
+  Heart,
+  Fingerprint
 } from 'lucide-react';
 import { UserProfile } from '../types';
 import { cn } from '../lib/utils';
+import { useAuth } from '../lib/AuthContext';
 
 interface ProfileProps {
   profile: UserProfile | null;
@@ -24,12 +27,14 @@ interface ProfileProps {
 }
 
 export function Profile({ profile, onSave, onClose }: ProfileProps) {
+  const { isGuest } = useAuth();
   const [isEditing, setIsEditing] = useState(!profile);
   const [formData, setFormData] = useState<UserProfile>(profile || {
     name: '',
     title: '',
     bio: '',
     skills: [],
+    interests: [],
     experience: '',
     socials: {
       linkedin: '',
@@ -38,6 +43,7 @@ export function Profile({ profile, onSave, onClose }: ProfileProps) {
     }
   });
   const [skillInput, setSkillInput] = useState('');
+  const [interestInput, setInterestInput] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,6 +69,20 @@ export function Profile({ profile, onSave, onClose }: ProfileProps) {
 
   const removeSkill = (skillToRemove: string) => {
     setFormData(prev => ({ ...prev, skills: prev.skills.filter(s => s !== skillToRemove) }));
+  };
+
+  const addInterest = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && interestInput.trim()) {
+      e.preventDefault();
+      if (!(formData.interests || []).includes(interestInput.trim())) {
+        setFormData(prev => ({ ...prev, interests: [...(prev.interests || []), interestInput.trim()] }));
+      }
+      setInterestInput('');
+    }
+  };
+
+  const removeInterest = (interestToRemove: string) => {
+    setFormData(prev => ({ ...prev, interests: (prev.interests || []).filter(i => i !== interestToRemove) }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -105,11 +125,16 @@ export function Profile({ profile, onSave, onClose }: ProfileProps) {
           
           <div className="absolute -bottom-20 left-16 group">
             <div className="relative">
-              <div className="h-40 w-40 rounded-[2.5rem] bg-slate-950 border-4 border-slate-950 shadow-2xl overflow-hidden flex items-center justify-center glow-indigo">
+              <div className="h-40 w-40 rounded-[2.5rem] bg-slate-950 border-4 border-slate-950 shadow-2xl overflow-hidden flex items-center justify-center glow-indigo relative">
                 {formData.avatar ? (
                   <img src={formData.avatar} alt="Profile" className="h-full w-full object-cover" />
                 ) : (
                   <User className="h-16 w-16 text-slate-800" />
+                )}
+                {isGuest && (
+                  <div className="absolute top-2 right-2 p-1.5 bg-amber-500 rounded-lg shadow-lg border border-amber-400/20 z-20">
+                    <Fingerprint className="h-4 w-4 text-white" />
+                  </div>
                 )}
               </div>
               {isEditing && (
@@ -121,13 +146,11 @@ export function Profile({ profile, onSave, onClose }: ProfileProps) {
                 </button>
               )}
             </div>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
-              accept="image/*" 
-              onChange={handleFileChange} 
-            />
+            {isGuest && (
+              <div className="absolute -bottom-10 left-0 text-[8px] font-black text-amber-500 uppercase tracking-[0.4em] bg-amber-500/10 px-4 py-1.5 rounded-full border border-amber-500/20 whitespace-nowrap glow-amber">
+                TEMPORARY_AGENT_PROFILE
+              </div>
+            )}
           </div>
         </div>
 
@@ -208,6 +231,31 @@ export function Profile({ profile, onSave, onClose }: ProfileProps) {
                       className="w-full bg-slate-950/40 border border-white/5 rounded-2xl px-8 py-5 text-sm font-bold text-white focus:outline-none focus:border-indigo-500/50 focus:glow-indigo transition-all placeholder:text-slate-800 uppercase tracking-widest italic"
                     />
                   </div>
+
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-2">DOMAIN_INTERESTS</label>
+                    <div className="relative group">
+                      <input
+                        type="text"
+                        value={interestInput}
+                        onChange={e => setInterestInput(e.target.value)}
+                        onKeyDown={addInterest}
+                        placeholder="ADD_INTEREST..."
+                        className="w-full bg-slate-950/40 border border-white/5 rounded-2xl px-8 py-5 text-sm font-bold text-white focus:outline-none focus:border-rose-500/50 focus:glow-rose transition-all placeholder:text-slate-800 uppercase tracking-widest italic"
+                      />
+                      <Heart className="absolute right-8 top-1/2 -translate-y-1/2 h-5 w-5 text-rose-500/40" />
+                    </div>
+                    <div className="flex flex-wrap gap-3 mt-6">
+                      {(formData.interests || []).map(interest => (
+                        <span key={interest} className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/5 text-rose-400 text-[10px] font-black flex items-center gap-3 group uppercase tracking-widest">
+                          {interest}
+                          <button type="button" onClick={() => removeInterest(interest)} className="hover:text-white transition-colors">
+                            <X className="h-4 w-4" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-10">
@@ -279,6 +327,21 @@ export function Profile({ profile, onSave, onClose }: ProfileProps) {
                   <div className="text-4xl font-black text-white flex items-center gap-4 italic">
                     {formData.experience}
                     <span className="text-[10px] text-slate-600 uppercase tracking-widest font-black italic">Legacy_Runtime</span>
+                  </div>
+                </div>
+
+                <div className="space-y-8">
+                  <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.5em] flex items-center gap-6">
+                    <Heart className="h-5 w-5 text-rose-400" />
+                    DOMAIN_INTERESTS
+                    <div className="h-px flex-1 bg-white/[0.03]" />
+                  </h4>
+                  <div className="flex flex-wrap gap-4">
+                    {(formData.interests || []).map(interest => (
+                      <span key={interest} className="px-8 py-3 rounded-2xl bg-rose-500/5 border border-rose-500/10 text-rose-300 text-[11px] font-black shadow-inner uppercase tracking-widest hover:text-white transition-colors cursor-default">
+                        {interest}
+                      </span>
+                    ))}
                   </div>
                 </div>
 

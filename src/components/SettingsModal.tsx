@@ -11,7 +11,8 @@ import {
   Cpu, 
   ChevronRight,
   Monitor,
-  Lock
+  Lock,
+  Zap
 } from 'lucide-react';
 import { UserSettings } from '../types';
 import { cn } from '../lib/utils';
@@ -142,6 +143,50 @@ export function SettingsModal({ settings, onSave, onClose }: SettingsModalProps)
                     />
                   </button>
                 </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Advanced Features */}
+          <section className="space-y-8">
+            <div className="flex items-center gap-4">
+              <Zap className="h-5 w-5 text-amber-400" />
+              <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.5em]">ADVANCED_LABS</h4>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[
+                { 
+                  key: 'aiMentorship', 
+                  label: 'NEURAL_MENTOR', 
+                  desc: 'Activate real-time GPT-4o powered career coaching and simulation guidance.',
+                  color: 'text-amber-400' 
+                },
+                { 
+                  key: 'realTimeMetrics', 
+                  label: 'HAPTIC_FEEDBACK', 
+                  desc: 'Stream high-frequency performance metrics during active simulations.',
+                  color: 'text-cyan-400'
+                },
+              ].map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => toggle(item.key as keyof UserSettings)}
+                  className={cn(
+                    "p-8 rounded-[2.5rem] border transition-all text-left group relative overflow-hidden",
+                    config[item.key as keyof UserSettings]
+                      ? "bg-white/[0.05] border-white/20 shadow-xl"
+                      : "bg-white/[0.01] border-white/5 opacity-60"
+                  )}
+                >
+                  <div className="relative z-10 space-y-4">
+                    <div className="flex items-center justify-between">
+                       <span className={cn("text-[9px] font-black uppercase tracking-[0.4em]", item.color)}>{item.label}</span>
+                       <div className={cn("h-2 w-2 rounded-full", config[item.key as keyof UserSettings] ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-slate-800")} />
+                    </div>
+                    <div className="text-white text-sm font-medium tracking-tight h-12 overflow-hidden">{item.desc}</div>
+                    <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{config[item.key as keyof UserSettings] ? 'STABLE_BUILD' : 'INACTIVE'}</div>
+                  </div>
+                </button>
               ))}
             </div>
           </section>

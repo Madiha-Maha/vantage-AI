@@ -113,6 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           title: 'Guest Explorer',
           bio: 'Exploring the cognitive edge in guest mode.',
           skills: ['Guest Access'],
+          interests: ['AI Simulations', 'Professional Growth'],
           experience: 'System Guest',
           avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=guest`,
           socials: {}
@@ -129,7 +130,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           notifications: true,
           recordingEnabled: true,
           privacyMode: true,
-          biometricAnalysis: true
+          biometricAnalysis: true,
+          aiMentorship: true,
+          realTimeMetrics: false
         };
         setSettings(initialSettings);
         localStorage.setItem(GUEST_SETTINGS_KEY, JSON.stringify(initialSettings));
@@ -150,6 +153,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           title: data.title || '',
           bio: data.bio || '',
           skills: data.skills || [],
+          interests: data.interests || [],
           experience: data.experience || '',
           avatar: data.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`,
           socials: data.socials || {}
@@ -159,7 +163,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           notifications: true,
           recordingEnabled: true,
           privacyMode: false,
-          biometricAnalysis: true
+          biometricAnalysis: true,
+          aiMentorship: true,
+          realTimeMetrics: false
         });
       } else {
         // Init profile if doesn't exist
@@ -168,6 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           title: '',
           bio: '',
           skills: [],
+          interests: [],
           experience: '',
           avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`,
           socials: {}
@@ -177,7 +184,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           notifications: true,
           recordingEnabled: true,
           privacyMode: false,
-          biometricAnalysis: true
+          biometricAnalysis: true,
+          aiMentorship: true,
+          realTimeMetrics: false
         };
         setDoc(userDocRef, {
           ...initialProfile,

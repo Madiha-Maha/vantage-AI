@@ -1,8 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
@@ -11,49 +11,86 @@
 }
 
 body {
-  @apply font-sans bg-slate-950 text-slate-200 min-h-screen relative overflow-x-hidden;
+  @apply font-sans bg-[#050505] text-[#A1A1AA] min-h-screen relative overflow-x-hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background-image: 
-    radial-gradient(at 0% 0%, hsla(263, 67%, 16%, .4) 0, transparent 50%),
-    radial-gradient(at 50% 0%, hsla(205, 100%, 15%, .3) 0, transparent 50%),
-    radial-gradient(at 100% 0%, hsla(242, 60%, 15%, .4) 0, transparent 50%);
-  pointer-events: none;
-}
-
 @layer utilities {
+  .noise-bg {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3%3Ffilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 200px;
+    opacity: 0.05;
+  }
+  .card-border {
+    @apply border border-white/[0.05] bg-[#0A0A0A];
+  }
   .glow-indigo {
-    box-shadow: 0 0 20px -5px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 60px -15px rgba(99, 102, 241, 0.2);
+  }
+  .glow-rose {
+    filter: drop-shadow(0 0 10px rgba(244, 63, 94, 0.3));
+    box-shadow: 0 0 20px rgba(244, 63, 94, 0.1);
+  }
+  .glow-amber {
+    filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.3));
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.1);
   }
   .glow-emerald {
-    box-shadow: 0 0 20px -5px rgba(16, 185, 129, 0.3);
+    filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.3));
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
   }
   .glass {
-    @apply bg-white/[0.03] backdrop-blur-xl border border-white/[0.05];
+    @apply bg-white/[0.02] backdrop-blur-3xl border border-white/[0.05];
   }
 }
 
-/* Custom scrollbar */
+.guest-scanline {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%,
+    rgba(0, 0, 0, 0.05) 50%
+  );
+  background-size: 100% 4px;
+  opacity: 0.15;
+}
+
+@keyframes scanline {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(100vh); }
+}
+
+.scanline-move {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: rgba(245, 158, 11, 0.1);
+  opacity: 0.2;
+  z-index: 10000;
+  pointer-events: none;
+  animation: scanline 8s linear infinite;
+}
+
+/* Custom scrollbar - ultra minimal */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
 }

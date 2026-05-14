@@ -43,6 +43,9 @@ export interface UserSettings {
   recordingEnabled: boolean;
   privacyMode: boolean;
   biometricAnalysis: boolean;
+  // Advanced Features
+  aiMentorship: boolean;
+  realTimeMetrics: boolean;
 }
 
 export interface UserProfile {
@@ -52,6 +55,7 @@ export interface UserProfile {
   avatar?: string;
   skills: string[];
   experience: string;
+  interests: string[];
   socials: {
     linkedin?: string;
     github?: string;
