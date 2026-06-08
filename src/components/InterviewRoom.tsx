@@ -104,8 +104,11 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
   const [mentorQuery, setMentorQuery] = useState("");
   const [mentorMessages, setMentorMessages] = useState<{role: 'user' | 'mentor', text: string}[]>([]);
   const [isMentorLoading, setIsMentorLoading] = useState(false);
-  const [initPhase, setInitPhase] = useState<"peripherals" | "logic" | "ready">("peripherals");
+  const [mediaDone, setMediaDone] = useState(false);
+  const [interviewDone, setInterviewDone] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [isConsolidating, setIsConsolidating] = useState(false);
+  const pendingAnalysesRef = useRef<Set<number>>(new Set());
 
   const [speechSupported, setSpeechSupported] = useState(true);
   const [mediaError, setMediaError] = useState<string | null>(null);
@@ -121,13 +124,10 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
 
   useEffect(() => {
     const runSetup = async () => {
-      const mediaPromise = initMedia();
-      const interviewPromise = initInterview();
-      await mediaPromise;
-      setInitPhase("logic");
-      await interviewPromise;
-      setInitPhase("ready");
-      setTimeout(() => setIsInitializing(false), 800);
+      const mediaPromise = initMedia().then(() => setMediaDone(true));
+      const interviewPromise = initInterview().then(() => setInterviewDone(true));
+      await Promise.all([mediaPromise, interviewPromise]);
+      setTimeout(() => setIsInitializing(false), 150);
     };
     runSetup();
     return () => {
@@ -197,31 +197,50 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
     isRecordingRef.current = false;
     if (recognitionRef.current) recognitionRef.current.stop();
     const duration = (Date.now() - startTimeRef.current) / 1000;
-    analyseAnswer(duration);
+    
+    const finalTranscript = transcript || "Standard pattern detected. Response metrics optimized for professional context.";
+    
+    setQuestions(prev => {
+      const updated = [...prev];
+      updated[currentIdx] = { ...updated[currentIdx], transcript: finalTranscript };
+      return updated;
+    });
+
+    analyseAnswerInBackground(currentIdx, finalTranscript, duration);
   };
 
-  const analyseAnswer = async (duration: number) => {
+  const analyseAnswerInBackground = async (questionIdx: number, text: string, duration: number) => {
+    pendingAnalysesRef.current.add(questionIdx);
     setIsAnalysing(true);
     try {
-      const currentQuestion = questions[currentIdx];
-      const finalTranscript = transcript || "Standard pattern detected. Response metrics optimized for professional context.";
-      const analysis = await GeminiService.analyzeAnswer(currentQuestion.text, finalTranscript, duration, config.role);
-      const updatedQuestions = [...questions];
-      updatedQuestions[currentIdx] = { ...currentQuestion, transcript: finalTranscript, analysis };
-      setQuestions(updatedQuestions);
+      const targetQuestion = questions[questionIdx];
+      const analysis = await GeminiService.analyzeAnswer(targetQuestion.text, text, duration, config.role);
+      setQuestions(prev => {
+        const updated = [...prev];
+        updated[questionIdx] = { ...updated[questionIdx], analysis };
+        return updated;
+      });
     } catch (error) {
-      console.error(error);
+      console.error("Background analysis failed:", error);
     } finally {
-      setIsAnalysing(false);
+      pendingAnalysesRef.current.delete(questionIdx);
+      setIsAnalysing(pendingAnalysesRef.current.size > 0);
     }
   };
 
-  const nextQuestion = () => {
+  const nextQuestion = async () => {
     if (currentIdx < questions.length - 1) {
       setCurrentIdx(prev => prev + 1);
       setTranscript("");
       setMentorMessages([]);
     } else {
+      if (pendingAnalysesRef.current.size > 0) {
+        setIsConsolidating(true);
+        while (pendingAnalysesRef.current.size > 0) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        setIsConsolidating(false);
+      }
       onComplete(questions);
     }
   };
@@ -281,9 +300,9 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
            
            <div className="space-y-12">
               {[
-                { label: "Peripherals", status: initPhase === "peripherals" ? "In_Progress" : "Complete" },
-                { label: "Neural Logic", status: initPhase === "logic" ? "In_Progress" : initPhase === "peripherals" ? "Pending" : "Complete" },
-                { label: "Assessment Matrix", status: initPhase === "ready" ? "Complete" : "Pending" }
+                { label: "Peripherals", status: mediaDone ? "Complete" : "In_Progress" },
+                { label: "Neural Logic", status: interviewDone ? "Complete" : (mediaDone ? "In_Progress" : "Pending") },
+                { label: "Assessment Matrix", status: (mediaDone && interviewDone) ? "Complete" : "Pending" }
               ].map((step, idx) => (
                 <div key={idx} className="flex items-center justify-between border-b border-white/5 pb-6">
                    <div className="flex items-center gap-6">
@@ -298,6 +317,21 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
                    </span>
                 </div>
               ))}
+           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isConsolidating) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen w-full bg-[#050505]">
+        <div className="max-w-md w-full px-12 text-center space-y-8">
+           <Loader2 className="h-12 w-12 text-[#6366F1] animate-spin mx-auto" />
+           <div className="space-y-3">
+              <span className="text-[10px] font-medium text-[#6366F1] uppercase tracking-[0.5em]">Consolidating Metrics</span>
+              <h2 className="text-2xl font-light text-white font-mono tracking-tight animate-pulse">GENERATING_REPORT...</h2>
+              <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Compiling raw transcripts, semantic indicators, and eye tracking signals.</p>
            </div>
         </div>
       </div>
@@ -372,7 +406,7 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
 
         <button
           onClick={nextQuestion}
-          disabled={isRecording || isAnalysing || !currentQuestion?.analysis}
+          disabled={isRecording || !currentQuestion?.transcript}
           className="group w-full p-8 border border-white/10 bg-white text-black hover:bg-white/90 transition-all font-medium text-[11px] tracking-[0.3em] uppercase flex items-center justify-between disabled:opacity-30"
         >
           {currentIdx === questions.length - 1 ? "Complete Simulation" : "Next Phase"}
@@ -461,7 +495,7 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
                 animate={{ opacity: 1 }}
                 className="text-white/60 text-lg font-light italic tracking-tight leading-relaxed line-clamp-2"
               >
-                {isRecording ? (transcript || "Monitoring audio signals...") : (currentQuestion?.analysis ? "Segment analyzed. Proceed to the next phase." : "Press initiate to begin segment capture.")}
+                {isRecording ? (transcript || "Monitoring audio signals...") : (currentQuestion?.transcript ? "Segment captured. Telemetry processing in background... Proceed to the next phase." : "Press initiate to begin segment capture.")}
               </motion.p>
             </AnimatePresence>
          </div>

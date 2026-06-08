@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, ThinkingLevel } from "@google/genai";
 import { InterviewConfig, InterviewQuestion, QuestionAnalysis, InterviewSession, UserProfile } from "../types";
 
 let aiInstance: any = null;
@@ -9,12 +9,19 @@ function getAI() {
     if (!apiKey) {
       throw new Error("GEMINI_API_KEY is not set.");
     }
-    aiInstance = new GoogleGenAI({ apiKey });
+    aiInstance = new GoogleGenAI({ 
+      apiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        }
+      }
+    });
   }
   return aiInstance;
 }
 
-const MODEL_NAME = "gemini-3-flash-preview";
+const MODEL_NAME = "gemini-3.5-flash";
 
 export class GeminiService {
   static async generateQuestions(config: InterviewConfig, count: number = 5): Promise<InterviewQuestion[]> {
@@ -32,6 +39,7 @@ export class GeminiService {
         model: MODEL_NAME,
         contents: prompt,
         config: {
+          thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.ARRAY,
@@ -93,6 +101,7 @@ export class GeminiService {
         model: MODEL_NAME,
         contents: prompt,
         config: {
+          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
           systemInstruction: "You are an expert interviewer. Provide analysis in strict JSON format.",
           responseMimeType: "application/json",
           responseSchema: {
@@ -153,6 +162,7 @@ export class GeminiService {
         model: MODEL_NAME,
         contents: prompt,
         config: {
+          thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
           systemInstruction: `You are ELITE_AI, a senior partner and executive career coach specialized in ${role} roles within the ${industry} sector.`
         }
       });
@@ -187,6 +197,7 @@ export class GeminiService {
         model: MODEL_NAME,
         contents: prompt,
         config: {
+          thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
           systemInstruction: `You are ELITE_AI, a senior partner and executive career coach. 
           Your goal is to provide high-impact, tactical, and psychological guidance to candidates. 
           Guidelines:
@@ -237,6 +248,7 @@ export class GeminiService {
         model: MODEL_NAME,
         contents: prompt,
         config: {
+          thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
           systemInstruction: "You are a partner at an executive search firm. Give senior-level strategic advice. Do not mention history explicitly. Professional tone only."
         }
       });
@@ -268,6 +280,7 @@ export class GeminiService {
         model: MODEL_NAME,
         contents: prompt,
         config: {
+          thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
           systemInstruction: "You are a senior partner evaluating an interview performance. Provide a high-impact, professional executive summary."
         }
       });
@@ -294,6 +307,7 @@ export class GeminiService {
         model: MODEL_NAME,
         contents: prompt,
         config: {
+          thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
           responseMimeType: "application/json",
           systemInstruction: "You are an elite career strategist. Provide high-impact, actionable 7-day growth steps."
         }

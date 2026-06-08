@@ -6,6 +6,7 @@
       "type": "object",
       "properties": {
         "name": { "type": "string" },
+        "email": { "type": "string" },
         "title": { "type": "string" },
         "bio": { "type": "string" },
         "avatar": { "type": "string" },

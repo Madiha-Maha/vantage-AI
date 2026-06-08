@@ -50,6 +50,7 @@ export interface UserSettings {
 
 export interface UserProfile {
   name: string;
+  email?: string;
   title: string;
   bio: string;
   avatar?: string;

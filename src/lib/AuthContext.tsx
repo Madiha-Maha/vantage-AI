@@ -150,6 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const data = docSnap.data();
         setProfile({
           name: data.name || (user.displayName || 'Agent'),
+          email: data.email || (user.email || ''),
           title: data.title || '',
           bio: data.bio || '',
           skills: data.skills || [],
@@ -171,6 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Init profile if doesn't exist
         const initialProfile: UserProfile = {
           name: user.displayName || 'Agent',
+          email: user.email || '',
           title: '',
           bio: '',
           skills: [],
@@ -256,6 +258,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await setDoc(userDocRef, { 
         ...newProfile, 
+        email: user.email || '',
         updatedAt: serverTimestamp() 
       }, { merge: true });
     } catch (error) {
