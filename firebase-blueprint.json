@@ -11,6 +11,7 @@
         "bio": { "type": "string" },
         "avatar": { "type": "string" },
         "skills": { "type": "array", "items": { "type": "string" } },
+        "interests": { "type": "array", "items": { "type": "string" } },
         "experience": { "type": "string" },
         "socials": {
           "type": "object",

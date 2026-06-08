@@ -30,13 +30,14 @@ service cloud.firestore {
     // 2. Validation Blueprints
     function isValidUser(data) {
       return data.updatedAt == request.time &&
-             data.keys().hasAll(['name', 'email', 'title', 'bio', 'avatar', 'skills', 'experience', 'socials', 'settings', 'updatedAt']) &&
+             data.keys().hasAll(['name', 'email', 'title', 'bio', 'avatar', 'skills', 'interests', 'experience', 'socials', 'settings', 'updatedAt']) &&
              data.name is string && data.name.size() <= 100 &&
              data.email is string && data.email.size() <= 200 &&
              data.title is string && data.title.size() <= 200 &&
              data.bio is string && data.bio.size() <= 1000 &&
              data.avatar is string && data.avatar.size() <= 1000 &&
              data.skills is list && data.skills.size() <= 50 &&
+             data.interests is list && data.interests.size() <= 50 &&
              data.experience is string && data.experience.size() <= 2000 &&
              data.socials is map && data.socials.size() <= 10 &&
              data.settings is map && data.settings.size() >= 5;

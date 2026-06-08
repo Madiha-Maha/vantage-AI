@@ -121,24 +121,90 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
   const isRecordingRef = useRef(false);
   const transcriptRef = useRef("");
   const lastTranscriptUpdateRef = useRef(0);
+  const isStartedRef = useRef(false);
 
   useEffect(() => {
+    if (!isInitializing) {
+      isStartedRef.current = true;
+    }
+  }, [isInitializing]);
+
+  useEffect(() => {
+    let active = true;
     const runSetup = async () => {
-      const mediaPromise = initMedia().then(() => setMediaDone(true));
-      const interviewPromise = initInterview().then(() => setInterviewDone(true));
-      await Promise.all([mediaPromise, interviewPromise]);
-      setTimeout(() => setIsInitializing(false), 150);
+      const timeout = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+      const mediaPromise = Promise.race([
+        initMedia(),
+        timeout(4500).then(() => {
+          console.warn("Media initialization timed out. Proceeding with backup configuration.");
+          if (active) {
+            setMediaError("Peripheral identification did not resolve within timeout. Proceeding with offline sensory mock.");
+          }
+        })
+      ]).then(() => {
+        if (active) setMediaDone(true);
+      });
+
+      const interviewPromise = Promise.race([
+        initInterview(),
+        timeout(5000).then(() => {
+          console.warn("Interview initialization timed out. Compiling fallback matrix parameters.");
+          if (active && questions.length === 0) {
+            setQuestions([
+              { id: "1", text: `As a ${config.role || 'Senior Professional'}, describe a high-stakes technical challenge you resolved and the architecture you chose.` },
+              { id: "2", text: "How do you ensure system reliability and performance scaling under extreme load?" },
+              { id: "3", text: "Walk me through your process for performing a root-cause analysis on a complex production outage." },
+              { id: "4", text: "How do you balance technical debt with the need for rapid feature deployment in a competitive industry?" },
+              { id: "5", text: "Describe a situation where you had a significant technical disagreement with a peer. How did you arrive at a resolution?" }
+            ]);
+          }
+        })
+      ]).then(() => {
+        if (active) setInterviewDone(true);
+      });
+
+      try {
+        await Promise.all([mediaPromise, interviewPromise]);
+      } catch (err) {
+        console.error("Boot sequence bypassed general error in parallel initialization:", err);
+      } finally {
+        if (active) {
+          setTimeout(() => setIsInitializing(false), 150);
+        }
+      }
     };
     runSetup();
     return () => {
+      active = false;
       stopMedia();
       if (recognitionRef.current) recognitionRef.current.stop();
     };
   }, []);
 
   const initInterview = async () => {
-    const generated = await GeminiService.generateQuestions(config);
-    setQuestions(generated);
+    try {
+      const generated = await GeminiService.generateQuestions(config);
+      if (isStartedRef.current) {
+        console.warn("Interview already started, skipping late question generation payload.");
+        return;
+      }
+      if (generated && generated.length > 0) {
+        setQuestions(generated);
+      } else {
+        throw new Error("No questions returned by API");
+      }
+    } catch (err) {
+      if (isStartedRef.current) return;
+      console.warn("AI Question generation failed or timed out, loading local high-quality questions:", err);
+      setQuestions([
+        { id: "1", text: `As a ${config.role || 'Senior Professional'}, describe a high-stakes technical challenge you resolved and the architecture you chose.` },
+        { id: "2", text: "How do you ensure system reliability and performance scaling under extreme load?" },
+        { id: "3", text: "Walk me through your process for performing a root-cause analysis on a complex production outage." },
+        { id: "4", text: "How do you balance technical debt with the need for rapid feature deployment in a competitive industry?" },
+        { id: "5", text: "Describe a situation where you had a significant technical disagreement with a peer. How did you arrive at a resolution?" }
+      ]);
+    }
   };
 
   const initMedia = async () => {
@@ -317,6 +383,29 @@ export function InterviewRoom({ config, onComplete }: InterviewRoomProps) {
                    </span>
                 </div>
               ))}
+           </div>
+
+           <div className="flex flex-col items-center gap-4 pt-4 border-t border-white/5">
+              <button
+                onClick={() => {
+                  if (questions.length === 0) {
+                    setQuestions([
+                      { id: "1", text: `As a ${config.role || 'Senior Professional'}, describe a high-stakes technical challenge you resolved and the architecture you chose.` },
+                      { id: "2", text: "How do you ensure system reliability and performance scaling under extreme load?" },
+                      { id: "3", text: "Walk me through your process for performing a root-cause analysis on a complex production outage." },
+                      { id: "4", text: "How do you balance technical debt with the need for rapid feature deployment in a competitive industry?" },
+                      { id: "5", text: "Describe a situation where you had a significant technical disagreement with a peer. How did you arrive at a resolution?" }
+                    ]);
+                  }
+                  setIsInitializing(false);
+                }}
+                className="px-6 py-3 border border-white/10 group flex items-center gap-3 bg-white/[0.01] hover:bg-white/[0.03] hover:border-white/20 transition-all cursor-pointer text-[10px] font-mono text-white/40 hover:text-white/85"
+                id="bypass-calibration-btn"
+              >
+                <span>Bypass Calibration & Force Start</span>
+                <ArrowRight className="h-3 w-3 text-white/20 group-hover:text-white/60 transition-transform group-hover:translate-x-0.5" />
+              </button>
+              <p className="text-[9px] font-mono text-white/20">Skip peripheral tuning and boot direct local simulation parameters.</p>
            </div>
         </div>
       </div>

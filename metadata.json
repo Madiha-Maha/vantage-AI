@@ -2,5 +2,5 @@
   "name": "Vantage",
   "description": "Professional performance assessment system with real-time analysis of confidence, speaking speed, and keywords.",
   "requestFramePermissions": ["camera", "microphone"],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

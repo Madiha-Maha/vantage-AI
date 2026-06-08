@@ -25,16 +25,16 @@ const MODEL_NAME = "gemini-3.5-flash";
 
 export class GeminiService {
   static async generateQuestions(config: InterviewConfig, count: number = 5): Promise<InterviewQuestion[]> {
-    const ai = getAI();
-    const prompt = `
-      You are an expert ${config.role} interviewer at a top-tier ${config.industry} firm.
-      Generate ${count} highly technical and behavioral interview questions for a ${config.difficulty} level candidate. 
-      The questions should test deep core competencies and problem-solving skills.
-      
-      Return a JSON array of objects with "id" (string) and "text" (string) properties.
-    `;
-
     try {
+      const ai = getAI();
+      const prompt = `
+        You are an expert ${config.role} interviewer at a top-tier ${config.industry} firm.
+        Generate ${count} highly technical and behavioral interview questions for a ${config.difficulty} level candidate. 
+        The questions should test deep core competencies and problem-solving skills.
+        
+        Return a JSON array of objects with "id" (string) and "text" (string) properties.
+      `;
+
       const response = await ai.models.generateContent({
         model: MODEL_NAME,
         contents: prompt,
@@ -82,21 +82,21 @@ export class GeminiService {
     durationSeconds: number,
     role: string
   ): Promise<QuestionAnalysis> {
-    const ai = getAI();
     const wordCount = (transcript || "").split(/\s+/).length;
     const speakingSpeed = durationSeconds > 0 ? Math.round((wordCount / durationSeconds) * 60) : 0;
 
-    const prompt = `
-      You are a senior hiring manager for a ${role} position.
-      Evaluate the following interview response:
-      Question: "${question}"
-      Candidate Answer: "${transcript}"
-      Metadata: { duration: ${durationSeconds}s, speed: ${speakingSpeed} wpm }
-
-      Provide a deep analysis. 
-    `;
-
     try {
+      const ai = getAI();
+      const prompt = `
+        You are a senior hiring manager for a ${role} position.
+        Evaluate the following interview response:
+        Question: "${question}"
+        Candidate Answer: "${transcript}"
+        Metadata: { duration: ${durationSeconds}s, speed: ${speakingSpeed} wpm }
+
+        Provide a deep analysis. 
+      `;
+
       const response = await ai.models.generateContent({
         model: MODEL_NAME,
         contents: prompt,
@@ -151,13 +151,13 @@ export class GeminiService {
     role: string,
     industry: string
   ): Promise<string> {
-    const ai = getAI();
-    const prompt = `
-      Current Interview Question: "${question}"
-      Candidate's Question/Query: "${userQuery}"
-    `;
-
     try {
+      const ai = getAI();
+      const prompt = `
+        Current Interview Question: "${question}"
+        Candidate's Question/Query: "${userQuery}"
+      `;
+
       const response = await ai.models.generateContent({
         model: MODEL_NAME,
         contents: prompt,
@@ -180,7 +180,6 @@ export class GeminiService {
     industry: string,
     onChunk: (chunk: string) => void
   ): Promise<void> {
-    const ai = getAI();
     const prompt = `
       CONTEXT: Active Interview Simulation
       ROLE: ${role}
@@ -193,6 +192,7 @@ export class GeminiService {
     `;
 
     try {
+      const ai = getAI();
       const response = await ai.models.generateContentStream({
         model: MODEL_NAME,
         contents: prompt,
@@ -216,7 +216,8 @@ export class GeminiService {
       console.error("Mentor Stream Error:", error);
       // Fallback to non-streaming if needed
       try {
-        const fallback = await ai.models.generateContent({
+        const aiFallback = getAI();
+        const fallback = await aiFallback.models.generateContent({
           model: MODEL_NAME,
           contents: prompt,
         });
@@ -230,7 +231,6 @@ export class GeminiService {
   static async getCareerInsights(history: InterviewSession[], profile: UserProfile | null): Promise<string> {
     if (history.length === 0) return "Initialize your first assessment to generate unique cognitive benchmarks and career trajectory insights.";
     
-    const ai = getAI();
     const avgScore = Math.round(history.reduce((acc, s) => acc + s.overallScore, 0) / history.length);
     const roles = Array.from(new Set(history.map(s => s.role))).join(", ");
     
@@ -244,6 +244,7 @@ export class GeminiService {
     `;
 
     try {
+      const ai = getAI();
       const response = await ai.models.generateContent({ 
         model: MODEL_NAME,
         contents: prompt,
@@ -259,7 +260,6 @@ export class GeminiService {
   }
 
   static async getSessionSummary(questions: InterviewQuestion[], role: string): Promise<string> {
-    const ai = getAI();
     const avgScore = Math.round(questions.reduce((acc, q) => acc + (q.analysis?.score || 0), 0) / questions.length);
     
     const performanceData = questions.map((q, i) => `Q${i+1}: ${q.text}\nScore: ${q.analysis?.score}%\nFeedback: ${q.analysis?.tips.join(". ")}`).join("\n\n");
@@ -276,6 +276,7 @@ export class GeminiService {
     `;
 
     try {
+      const ai = getAI();
       const response = await ai.models.generateContent({ 
         model: MODEL_NAME,
         contents: prompt,
@@ -291,7 +292,6 @@ export class GeminiService {
   }
 
   static async getGrowthPlan(questions: InterviewQuestion[], role: string): Promise<string[]> {
-    const ai = getAI();
     const performanceData = questions.map(q => q.analysis?.tips.join(" ")).join(" ");
 
     const prompt = `
@@ -303,6 +303,7 @@ export class GeminiService {
     `;
 
     try {
+      const ai = getAI();
       const response = await ai.models.generateContent({ 
         model: MODEL_NAME,
         contents: prompt,
